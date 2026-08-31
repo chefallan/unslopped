@@ -1,0 +1,11 @@
+node_modules/
+.ade/state.json
+.ade/cycles/
+.ade/history.jsonl
+.ade/logs/
+dist/
+.ade/worktrees/
+.ade/graph.json
+.ade/graph.html
+.ade/GRAPH.md
+*.tgz

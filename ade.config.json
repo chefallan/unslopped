@@ -1,0 +1,159 @@
+{
+  "commands": {
+    "setup": "npm ci",
+    "lint": null,
+    "build": "npm run build",
+    "test": "npm test",
+    "release": null,
+    "deploy": null,
+    "rollback": null,
+    "healthcheck": null,
+    "monitor": null
+  },
+  "deploy": {
+    "requireApproval": true
+  },
+  "tracker": {
+    "provider": "github",
+    "comments": true,
+    "transitions": {
+      "code": "In Progress",
+      "release": "In Review",
+      "done": "Done"
+    },
+    "jira": {
+      "baseUrl": null
+    },
+    "github": {
+      "repo": "chefallan/awesome-delivery-engine"
+    },
+    "webhook": {
+      "url": null
+    }
+  },
+  "memory": {
+    "skills": true,
+    "history": true
+  },
+  "tokens": {
+    "mode": "compact",
+    "outputLines": 25,
+    "pointerFiles": true
+  },
+  "practices": {
+    "planSections": [
+      "Goal",
+      "Approach",
+      "Files to touch"
+    ],
+    "testEvidence": true,
+    "testPatterns": [
+      "\\.(test|spec)\\.[cm]?[jt]sx?$",
+      "(^|/)(test|tests|__tests__|spec|specs)/",
+      "_test\\.(go|py|rs|rb|php|ex|exs)$",
+      "(^|/)test_[^/]+\\.py$",
+      "(Test|Tests|Spec)\\.(java|kt|cs|swift|scala)$",
+      "\\.(test|spec)\\.(rb|php|dart)$"
+    ],
+    "coverage": null,
+    "securityScan": null,
+    "changelog": true,
+    "tdd": true,
+    "reviewArtifact": false,
+    "reviewCommand": null,
+    "worktree": false,
+    "pullRequest": {
+      "auto": false,
+      "base": null,
+      "draft": false
+    },
+    "style": {
+      "forbidden": [
+        "—",
+        "–"
+      ],
+      "fillerWords": [
+        "basically",
+        "simply",
+        "just",
+        "very",
+        "really",
+        "actually",
+        "obviously",
+        "of course",
+        "clearly",
+        "easily",
+        "in order to",
+        "note that",
+        "it is worth noting",
+        "needless to say",
+        "as you can see"
+      ],
+      "maxCommentRatio": 0.25,
+      "noIssueRefs": true,
+      "singleOutcomeTests": true
+    },
+    "scope": true,
+    "criteriaQuality": true,
+    "testDeletion": true,
+    "guardedPaths": [
+      "**/auth/**",
+      "**/security/**",
+      "**/permissions/**",
+      "**/migrations/**",
+      "**/payment/**",
+      "**/payments/**",
+      "**/billing/**",
+      "**/ledger/**"
+    ],
+    "exclusivePaths": [],
+    "declarations": [],
+    "handoffNote": false,
+    "criteriaChecked": true,
+    "commitPattern": "^(feat|fix|chore|docs|refactor|test|build|ci|perf|style|revert)(\\([^)]+\\))?!?: .+",
+    "commitScopes": null,
+    "protectedBranches": [
+      "main",
+      "master"
+    ],
+    "maxDiffLines": 400,
+    "secretScan": true,
+    "audit": "npm audit --audit-level=high",
+    "rollback": true,
+    "reviewApproval": false,
+    "monitorNotes": true
+  },
+  "graph": {
+    "enabled": true,
+    "maxFiles": 20000,
+    "maxFileKb": 512,
+    "ignore": [
+      "node_modules",
+      ".git",
+      ".ade",
+      "dist",
+      "build",
+      "out",
+      "target",
+      "vendor",
+      "coverage",
+      ".next",
+      ".nuxt",
+      ".venv",
+      "venv",
+      "__pycache__",
+      ".cache",
+      ".idea",
+      ".vscode",
+      ".terraform"
+    ]
+  },
+  "assistants": [
+    "agents",
+    "claude",
+    "cursor",
+    "copilot",
+    "windsurf",
+    "gemini"
+  ]
+}

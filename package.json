@@ -1,0 +1,55 @@
+{
+  "name": "awesome-delivery-engine",
+  "version": "0.1.0",
+  "description": "Awesome Delivery Engine (ade). A delivery gatekeeper for AI coding assistants: one prompt in, verified software out. Eight gated phases, tracker and PR integration, a code map, memory and delivery metrics.",
+  "type": "module",
+  "bin": {
+    "ade": "bin/ade.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run build",
+    "test": "node --test \"test/*.test.ts\"",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "delivery",
+    "devops",
+    "sdlc",
+    "ai",
+    "coding-assistant",
+    "claude-code",
+    "cursor",
+    "copilot",
+    "codex",
+    "agents",
+    "ci",
+    "gates",
+    "code-review",
+    "dora"
+  ],
+  "author": "Chef Allan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chefallan/awesome-delivery-engine.git"
+  },
+  "homepage": "https://github.com/chefallan/awesome-delivery-engine#readme",
+  "bugs": {
+    "url": "https://github.com/chefallan/awesome-delivery-engine/issues"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "@types/node": "^24.0.0"
+  }
+}
