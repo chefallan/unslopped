@@ -96,7 +96,7 @@ export function promptContext(root: string, prompt: string, cmd = 'ade', home = 
     appendHistory(root, { at: new Date().toISOString(), prompt: p.slice(0, 500), cycle: state.cycle?.id ?? null });
   }
   if (state.cycle) {
-    const text = ['ade: active cycle', ...statusLines(root, config, state, cmd).map((l) => '  ' + l), `Continue this cycle. Advance with \`${cmd} next\`.`, ...memoryLines(root, home, p, cmd, config.graph)].join('\n') + '\n';
+    const text = ['ade: active cycle', ...statusLines(root, config, state, cmd).map((l) => '  ' + l), `Continue this cycle: \`${cmd} resume\` lists the next actions. Advance with \`${cmd} next\`.`, ...memoryLines(root, home, p, cmd, config.graph)].join('\n') + '\n';
     accountHook(root, state, text.length, text.length);
     return text;
   }

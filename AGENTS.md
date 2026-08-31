@@ -6,8 +6,8 @@ This project runs the DevOps lifecycle through ADE: plan, code, build, test, rel
 ## Start of every task
 0. If the project has no `ade.config.json`, run `npx awesome-delivery-engine init` first.
 1. Run `npx awesome-delivery-engine status`.
-2. No active cycle: run `npx awesome-delivery-engine start "<the user's request in one line>"`. Keep any issue key or link from the request (ENG-123, PROJ-45, #12, a Linear, Jira or GitHub URL) in that line. ADE links it, or the issue in the branch name, and copies its title and description into the plan. If start refuses because the branch is protected, either create the branch it suggests and start again, or run `npx awesome-delivery-engine start --worktree "<goal>"` to work in an isolated checkout and then `cd` into the path it prints. Every later command runs there.
-3. Active cycle: continue from the phase it reports. Do not start a new one.
+2. No active cycle: run `npx awesome-delivery-engine start "<the user's request in one line>"`. Keep any issue key or link from the request (ENG-123, PROJ-45, #12, a Linear, Jira or GitHub URL) in that line. ADE links it, or the issue in the branch name, and copies its title and description into the plan. If start refuses because the branch is protected, either create the branch it suggests and start again, or run `npx awesome-delivery-engine start --worktree "<goal>"` to work in an isolated checkout and then `cd` into the path it prints. Every later command runs there. If start warns that uncommitted files predate the cycle, stop and commit them as their own chore commit first, so the gates measure only this cycle's work.
+3. Active cycle: run `npx awesome-delivery-engine resume` and do what it lists. Do not start a new one.
 
 ## Design before planning
 If the request is more than a one-file change, do not plan yet. Ask the user two or three short design questions: constraints, the alternatives you see, what must not change. Then write the option you chose and the ones you rejected, with one reason each, under `## Approach` in the plan. A one-file change needs one sentence there. For work on guarded paths, also write the main scenario as given, when, then, including the rejection path, so the negative criterion falls out of it.
@@ -46,7 +46,7 @@ Some decisions belong to a human even when you could invent an answer: product b
 - When the change has a surface a person can verify, fill "## Handoff" in the plan: what to verify, how to reach it, the concrete data needed, the rejections to try with expected results, gotchas. It posts to the issue when the cycle completes.
 - Never edit `.ade/state.json`, `ade.config.json`, or any test to make a gate pass. A config change mid-cycle blocks the cycle until a human approves it.
 - Never use --force, --no-verify, skip flags, or delete tests. Never tick an acceptance criterion you did not verify. Never run `npx awesome-delivery-engine red` against a test you expect to pass; red means the new test fails for the right reason.
-- Never run `ade approve`, `ade reset` or `ade rollback`. Those are for humans.
+- Never run `ade approve`, `ade reset` or `ade rollback`. Those are for humans. When a cycle should be abandoned, tell the human; giving reset the next goal starts the replacement cycle in the same step.
 - Report failures verbatim. Never describe a failing gate as passing.
 - Gate output is already reduced to the lines that matter. Read what is printed; open the full log path only when that is not enough. Never re-run a command to see its output again, and never paste command output into the plan.
 - Keep the diff minimal. No refactors outside the plan. If the diff limit is hit, split the work into another cycle.

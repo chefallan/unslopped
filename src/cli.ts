@@ -6,10 +6,11 @@ import { statusLines } from './status.ts';
 import { install, uninstall, onPath } from './install.ts';
 import { readStdinJson, readStdinText, sessionContext, promptContext, toolDecision } from './hooks.ts';
 import { loadConfig, saveConfig, configHash, CONFIG_FILE } from './config.ts';
-import { loadState, saveState, newCycle, archiveCycle, archivedCycles, planPath, planTemplate, plansDir, stateDir } from './state.ts';
+import { loadState, saveState, newCycle, archiveCycle, archivedCycles, planPath, planTemplate, plansDir, stateDir, STATE_DIR } from './state.ts';
+import { resumeLines } from './resume.ts';
 import { runGate, describeGate } from './gates.ts';
 import { init } from './init.ts';
-import { isRepo, headSha, currentBranch, addWorktree, commitsSinceDate } from './git.ts';
+import { isRepo, headSha, currentBranch, addWorktree, commitsSinceDate, porcelain } from './git.ts';
 import { runCommand } from './run.ts';
 import { digest, account } from './tokens.ts';
 import { changedTestFiles, configSecretProblem, countFindings, planSection, redactSecrets } from './practices.ts';
@@ -38,6 +39,7 @@ const HELP = `ade <command>
                                            per project: write ade.config.json and assistant instruction files.
                                            --ci adds a GitHub Actions workflow that reviews every pull request
   status [--json]                          show the active cycle and its phase
+  resume                                   where the active cycle stands and what to do next (alias: continue)
   start "<goal>" [--issue=KEY] [--no-issue] [--worktree] [--from-debt[=cleanup|pattern|soon|all]]
                                            begin a cycle at the plan phase. issue keys in the goal or branch name are linked automatically.
                                            --worktree runs the cycle in its own checkout on a new branch.
@@ -55,7 +57,7 @@ const HELP = `ade <command>
   rollback                                 run commands.rollback (humans only)
   log                                      print gate history for the active cycle
   tracker [--issue=KEY]                    show tracker settings, optionally fetch an issue
-  reset                                    abandon the active cycle
+  reset ["<goal>"] [start flags]           abandon the active cycle; with a goal, start the next one in the same step
   skills [--json]                          list learned skills with health
   skill show|save|rm <name|"title">        read, write ([--file=notes.md] [--global]) or delete a skill
   debt "<what>" [--where=path] [--category=cleanup|pattern|soon|accepted]
@@ -447,6 +449,10 @@ async function cmdStart(io: Writer, root: string, args: string[], flags: Flags, 
     const protectedProblem = protectedBranchProblem(config.practices, currentBranch(root), suggestion);
     if (protectedProblem) return fail(io, protectedProblem);
   }
+  if (work === root) {
+    const dirty = porcelain(root, { exclude: [STATE_DIR] }).split(/\r?\n/).filter(Boolean).length;
+    if (dirty) out(io, `WARN ${dirty} uncommitted file(s) predate this cycle and will count toward its diff gates. commit or stash them first for a clean baseline`);
+  }
   const matches = config.memory.skills ? matchSkills(root, deps.home, goal) : [];
   const cycle = newCycle(goal, configHash(config), headSha(work), issue);
   cycle.usedSkills = matches.filter((m) => m.strong).map((m) => m.name);
@@ -649,7 +655,7 @@ async function cmdTracker(io: Writer, root: string, flags: Flags, deps: Deps): P
   }
 }
 
-async function cmdReset(io: Writer, root: string, deps: Deps): Promise<number> {
+async function cmdReset(io: Writer, root: string, args: string[], flags: Flags, deps: Deps): Promise<number> {
   const config = loadConfig(root);
   const state = loadState(root);
   const cycle = requireCycle(io, state);
@@ -663,6 +669,19 @@ async function cmdReset(io: Writer, root: string, deps: Deps): Promise<number> {
     if (learned.action !== 'none') out(io, `skill ${learned.name} marked abandoned (${learned.health})`);
   }
   if (config && cycle.issue) await notifyTracker({ config, cycle, event: { type: 'abandoned' }, io, env: discoverSecrets(config, deps.env, root), fetchImpl: deps.fetchImpl });
+  if (args.length || flags.issue || flags['from-debt']) {
+    out(io);
+    return cmdStart(io, root, args, flags, deps);
+  }
+  return 0;
+}
+
+function cmdResume(io: Writer, root: string): number {
+  const config = requireConfig(io, root);
+  if (!config) return 2;
+  const state = loadState(root);
+  if (!requireCycle(io, state)) return 2;
+  for (const line of resumeLines(root, config, state)) out(io, line);
   return 0;
 }
 
@@ -974,7 +993,10 @@ export async function main(argv: string[], root: string, io: Writer = process.st
       case 'tracker':
         return await cmdTracker(io, root, flags, d);
       case 'reset':
-        return await cmdReset(io, root, d);
+        return await cmdReset(io, root, args, flags, d);
+      case 'resume':
+      case 'continue':
+        return cmdResume(io, root);
       case 'skills':
         return cmdSkills(io, root, flags, d);
       case 'skill':

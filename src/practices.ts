@@ -266,12 +266,14 @@ export interface StyleHit {
   problem: string;
 }
 
+const STYLE_SKIP = /(^|\/)ade\.config\.json$/;
+
 export function scanStyle(lines: Array<{ file: string; line: number; text: string }>, rules: StyleRules): StyleHit[] {
   const hits: StyleHit[] = [];
   const filler = rules.fillerWords.length ? new RegExp(`\\b(${rules.fillerWords.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'i') : null;
   const perFile = new Map<string, { total: number; comments: number }>();
   for (const l of lines) {
-    if (SCAN_SKIP.test(l.file)) continue;
+    if (SCAN_SKIP.test(l.file) || STYLE_SKIP.test(l.file)) continue;
     for (const ch of rules.forbidden) {
       if (l.text.includes(ch)) hits.push({ file: l.file, line: l.line, problem: `${CHAR_NAMES[ch] ?? JSON.stringify(ch)} in "${l.text.trim().slice(0, 60)}"` });
     }

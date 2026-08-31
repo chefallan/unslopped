@@ -55,12 +55,13 @@ Lifecycle:
 ```
 ade init [--force] [--all] [--only=claude,cursor] [--tracker=<name>] [--ci]
 ade status [--json]
+ade resume                         where the cycle stands and what to do next (alias: continue)
 ade start "<goal>" [--issue=KEY] [--no-issue] [--worktree] [--from-debt[=cleanup|pattern|soon|all]]
 ade next [--json] [--full]         run the current gate, advance on pass
 ade check [--json] [--full]        run the current gate without advancing
 ade red                            run the tests expecting a failure, record the evidence
 ade log                            gate history for the active cycle
-ade reset                          abandon the cycle (humans only)
+ade reset ["<goal>"]               abandon the cycle (humans only); with a goal, start the next one in the same step
 ```
 
 Humans in the loop:
@@ -227,6 +228,8 @@ Environment: `LINEAR_API_KEY`, `JIRA_EMAIL` + `JIRA_API_TOKEN` + `JIRA_BASE_URL`
 ## Isolation and recovery
 
 `ade start --worktree` runs the whole cycle in its own git worktree on a fresh branch, with `commands.setup` applied, leaving the main checkout untouched. `ade rollback` runs the configured undo, records it in the cycle history, and stays human-only.
+
+One cycle is active per repository. Coming back to it, `ade resume` prints where it stands, the failing checks from the last gate run and the next actions. Walking away from it, `ade reset "<new goal>"` archives it as abandoned and starts the replacement in one command; `ade start` also warns when uncommitted files predate the cycle, so the baseline stays clean and the diff gates measure only the cycle's own work.
 
 ## Requirements
 
