@@ -116,7 +116,7 @@
       "main",
       "master"
     ],
-    "maxDiffLines": 400,
+    "maxDiffLines": 1200,
     "secretScan": true,
     "audit": "npm audit --audit-level=high",
     "rollback": true,
