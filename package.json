@@ -1,7 +1,7 @@
 {
   "name": "unslopped",
   "version": "0.1.0",
-  "description": "Awesome Delivery Engine (unslopped). A delivery gatekeeper for AI coding assistants: one prompt in, verified software out. Eight gated phases, tracker and PR integration, a code map, memory and delivery metrics.",
+  "description": "unslopped keeps AI coding assistants from shipping slop: one prompt in, verified software out. Eight gated phases, code review that flags exploitable lines, tracker and PR integration, a code map, memory and delivery metrics.",
   "type": "module",
   "bin": {
     "unslopped": "bin/unslopped.js"

@@ -55,6 +55,7 @@ export interface Practices {
   protectedBranches: string[];
   maxDiffLines: number;
   secretScan: boolean;
+  exploitScan: boolean;
   audit: string | null;
   rollback: boolean;
   reviewApproval: boolean;

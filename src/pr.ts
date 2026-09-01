@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { githubRepo, githubToken } from './detect.ts';
-import { commitSubjects, currentBranch, pushBranch } from './git.ts';
+import { commitSubjects, currentBranch, parseUnifiedDiff, pushBranch } from './git.ts';
+import { scanExploitable } from './vulns.ts';
 import { createPr, createReview, defaultBranch, findOpenPr, getPr, getPrDiff, getPrFiles, githubClient, prBody, prTitle, reviewPayload, rightSideLines } from './github.ts';
 import { matchesAny, parseFindings, planSection, scanDiffText } from './practices.ts';
 import { ensureGraph } from './graph.ts';
@@ -217,6 +218,13 @@ export async function reviewPullRequest(io: Writer, root: string, config: Config
       const auto = secrets.map((h) => `- [critical] ${h.file}:${h.line} looks like a real ${h.name}: remove it, load it from an environment variable, and rotate the value`).join('\n');
       text = `${auto}\n${text}`;
       out(io, `${secrets.length} credential-looking line(s) in the PR diff added as critical findings`);
+    }
+    if (config.practices.exploitScan) {
+      const risky = scanExploitable(parseUnifiedDiff(diff), config.practices.testPatterns);
+      if (risky.length) {
+        text = `${risky.map((f) => `- [major] ${f.text}`).join('\n')}\n${text}`;
+        out(io, `${risky.length} exploitable-looking line(s) added as findings`);
+      }
     }
     let impactNote = '';
     const graph = ensureGraph(root, config.graph);

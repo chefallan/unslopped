@@ -1,4 +1,4 @@
-# Awesome Delivery Engine
+# unslopped
 
 `unslopped` is a delivery gatekeeper for AI coding assistants. One prompt goes in; verified software comes out. Every phase of the lifecycle ends in a gate that runs real commands and reads exit codes, so an assistant cannot advance by claiming success. It has to earn it.
 
@@ -160,6 +160,8 @@ Linear, Jira Cloud, GitHub Issues, or any HTTP endpoint through the webhook prov
 ## Pull requests
 
 `unslopped pr` pushes the branch and opens a PR written for the reviewer: a conventional title derived from the cycle's commits, then Why, What changed and Review focus (judgment calls from the plan, guarded paths touched, declaration lines), the issue linkage, the impact analysis and the cycle summary. `unslopped review --pr=<n>` reviews any PR, including ones opened by people: findings with `file:line` land as inline comments, critical findings request changes and fail CI, secrets in the diff are flagged without being asked, and changed hot exports without tests become major findings. `unslopped init --ci` makes that run on every PR through GitHub Actions. `unslopped pr status` follows the merge and closes the loop with the tracker.
+
+Review also watches for lines that look exploitable: SQL built by hand, HTML sinks, shell commands from variables, unsafe deserialization, weak password hashing, guessable randomness for secrets, disabled certificate checks, and paths or redirects built from request data. Each one lands as an advisory finding that says in one sentence what an attacker could do with it. They never block a merge on their own; `practices.exploitScan` turns them off.
 
 ## Numbers
 

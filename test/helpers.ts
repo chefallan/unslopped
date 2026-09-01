@@ -49,6 +49,7 @@ export const PRACTICES_OFF = {
   protectedBranches: [] as string[],
   maxDiffLines: 0,
   secretScan: false,
+  exploitScan: false,
   audit: null,
   rollback: false,
   reviewApproval: false,

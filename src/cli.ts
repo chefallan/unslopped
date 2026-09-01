@@ -10,7 +10,8 @@ import { loadState, saveState, newCycle, archiveCycle, archivedCycles, planPath,
 import { resumeLines } from './resume.ts';
 import { runGate, describeGate } from './gates.ts';
 import { init } from './init.ts';
-import { isRepo, headSha, currentBranch, addWorktree, commitsSinceDate, porcelain } from './git.ts';
+import { isRepo, headSha, currentBranch, addWorktree, commitsSinceDate, porcelain, addedLines } from './git.ts';
+import { scanExploitable } from './vulns.ts';
 import { runCommand } from './run.ts';
 import { digest, account } from './tokens.ts';
 import { changedTestFiles, configSecretProblem, countFindings, planSection, redactSecrets } from './practices.ts';
@@ -388,6 +389,13 @@ async function cmdReview(io: Writer, root: string, flags: Flags, deps: Deps): Pr
     text = deps.stdinText ?? readStdinText();
     source = 'stdin';
     if (!text.trim()) return fail(io, 'usage: unslopped review --file=<review.md>, pipe the review on stdin, or set practices.reviewCommand');
+  }
+  if (config.practices.exploitScan) {
+    const risky = scanExploitable(addedLines(root, cycle.startCommit), config.practices.testPatterns);
+    if (risky.length) {
+      text = `${risky.map((f) => `- [major] ${f.text}`).join('\n')}\n${text}`;
+      out(io, `${risky.length} exploitable-looking line(s) added as findings`);
+    }
   }
   fs.writeFileSync(file, text.endsWith('\n') ? text : text + '\n');
   const counts = countFindings(text);

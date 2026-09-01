@@ -46,6 +46,7 @@ export function practiceDefaults(): Practices {
     protectedBranches: ['main', 'master'],
     maxDiffLines: 400,
     secretScan: true,
+    exploitScan: true,
     audit: null,
     rollback: true,
     reviewApproval: false,
