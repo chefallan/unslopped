@@ -12,3 +12,4 @@ copy; fix it before it spreads), soon (costs someone time while it exists), acce
 - [soon] tool hook blocks shell commands that mention the config file next to any greater-than character, arrows included (src/hooks.ts) :: logged 2026-08-31, cycle 20260831-08ed52
 - [soon] add CHANGELOG.md before first npm publish :: logged 2026-08-31, cycle 20260831-08ed52
 - [pattern] scopeCheck should tolerate a trailing parenthetical note on Files to touch entries (src/practices.ts) :: logged 2026-09-01, cycle 20260831-08ed52
+- [soon] config hash treats new practice defaults from an upgrade as mid-cycle tampering; hash the raw file or a stored snapshot instead (src/config.ts) :: logged 2026-09-01, cycle 20260901-3b9ebc
