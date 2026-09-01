@@ -30,13 +30,13 @@ import { ensureGraph, findFile, formatHits, formatNode, formatPath, fullReport, 
 import { computeImpact, formatImpact, localChanges } from './impact.ts';
 import type { Config, Cycle, Deps, Env, Flags, GateResult, Issue, Provider, ReviewRecord, SkillMatch, State, Writer } from './types.ts';
 
-const HELP = `ade <command>
+const HELP = `unslopped <command>
 
   install [--only=claude,codex]            one time, per machine: hooks for Claude Code and Cursor, global rules for
                                            Codex, Gemini, Windsurf, Copilot, OpenCode, Cline, Roo, Kilo, Continue, Goose
   uninstall [--only=...]                   remove what install wrote
   init [--force] [--all] [--only=claude,cursor] [--tracker=linear] [--ci]
-                                           per project: write ade.config.json and assistant instruction files.
+                                           per project: write unslopped.config.json and assistant instruction files.
                                            --ci adds a GitHub Actions workflow that reviews every pull request
   status [--json]                          show the active cycle and its phase
   resume                                   where the active cycle stands and what to do next (alias: continue)
@@ -61,7 +61,7 @@ const HELP = `ade <command>
   skills [--json]                          list learned skills with health
   skill show|save|rm <name|"title">        read, write ([--file=notes.md] [--global]) or delete a skill
   debt "<what>" [--where=path] [--category=cleanup|pattern|soon|accepted]
-                                           log a known deviation to .ade/DEBT.md instead of fixing it out of scope
+                                           log a known deviation to .unslopped/DEBT.md instead of fixing it out of scope
   debt                                     list the logged debt by category
   decide "<title>"                         scaffold docs/decisions/NNNN-<slug>.md for a decision others must follow
   decide                                   list recorded decisions with their status
@@ -73,8 +73,8 @@ const HELP = `ade <command>
   graph path <from> <to>                   shortest import chain between two files
   graph why "<topic>"                      design rationale, constraints and debt markers mined from comments and docs
   graph impact [--since=<ref>] [files...]  what the current changes touch: symbols, dependents, covering tests, hot exports
-  graph report                             write .ade/GRAPH.md: areas, god files, cross-area and surprising imports
-  graph html                               write .ade/graph.html, an interactive map to open in a browser
+  graph report                             write .unslopped/GRAPH.md: areas, god files, cross-area and surprising imports
+  graph html                               write .unslopped/graph.html, an interactive map to open in a browser
   graph refresh [--quiet]                  rebuild the code map (runs by itself from hooks; rarely needed by hand)
   hook claude session|prompt|tool          called by Claude Code hooks, reads the event from stdin
   hook cursor shell                        called by the Cursor beforeShellExecution hook
@@ -134,7 +134,7 @@ function printChecks(io: Writer, result: GateResult): void {
 
 function requireCycle(io: Writer, state: State): Cycle | null {
   if (!state.cycle) {
-    fail(io, 'no active cycle. run: ade start "<goal>"');
+    fail(io, 'no active cycle. run: unslopped start "<goal>"');
     return null;
   }
   return state.cycle;
@@ -143,7 +143,7 @@ function requireCycle(io: Writer, state: State): Cycle | null {
 function requireConfig(io: Writer, root: string): Config | null {
   const config = loadConfig(root);
   if (!config) {
-    fail(io, `${CONFIG_FILE} not found. run: ade init`);
+    fail(io, `${CONFIG_FILE} not found. run: unslopped init`);
     return null;
   }
   const problem = configSecretProblem(config);
@@ -158,7 +158,7 @@ function configDrift(io: Writer, config: Config, cycle: Cycle): boolean {
   const current = configHash(config);
   if (current === cycle.configHash) return false;
   out(io, `FAIL ${CONFIG_FILE} changed during this cycle (${cycle.configHash} -> ${current}).`);
-  out(io, 'A human must review the change and run: ade approve config');
+  out(io, 'A human must review the change and run: unslopped approve config');
   return true;
 }
 
@@ -207,8 +207,8 @@ function cmdInstall(io: Writer, flags: Flags, deps: Deps, remove: boolean): numb
   const r = install(deps.home, opts);
   for (const x of r.written) out(io, `wrote ${x.file}  (${x.key}: ${x.note})`);
   out(io);
-  out(io, 'every project you open now gets the protocol. run `ade init` in a project once to set its commands, or let the assistant do it.');
-  if (!onPath('ade')) out(io, '\nWARN ade is not on PATH. hooks call `ade`. install it globally: npm i -g awesome-delivery-engine');
+  out(io, 'every project you open now gets the protocol. run `unslopped init` in a project once to set its commands, or let the assistant do it.');
+  if (!onPath('unslopped')) out(io, '\nWARN unslopped is not on PATH. hooks call `unslopped`. install it globally: npm i -g unslopped');
   return 0;
 }
 
@@ -218,27 +218,27 @@ function cmdHook(io: Writer, root: string, args: string[], deps: Deps): number {
   const cwd = typeof input.cwd === 'string' && input.cwd ? input.cwd : root;
   if (assistant === 'claude') {
     if (event === 'session') {
-      io.write(sessionContext(cwd, 'ade', deps.home));
+      io.write(sessionContext(cwd, 'unslopped', deps.home));
       return 0;
     }
     if (event === 'prompt') {
-      io.write(promptContext(cwd, String(input.prompt ?? ''), 'ade', deps.home));
+      io.write(promptContext(cwd, String(input.prompt ?? ''), 'unslopped', deps.home));
       return 0;
     }
     if (event === 'tool') {
       const d = toolDecision(cwd, input.tool_name, (input.tool_input ?? {}) as Record<string, unknown>);
       if (!d.block) return 0;
-      deps.stderr.write(`ade: ${d.reason}\n`);
+      deps.stderr.write(`unslopped: ${d.reason}\n`);
       return 2;
     }
   }
   if (assistant === 'cursor' && event === 'shell') {
     const d = toolDecision(cwd, 'Bash', { command: input.command });
-    const verdict = d.block ? { permission: 'deny', userMessage: `ade: ${d.reason}`, agentMessage: `ade: ${d.reason}` } : { permission: 'allow' };
+    const verdict = d.block ? { permission: 'deny', userMessage: `unslopped: ${d.reason}`, agentMessage: `unslopped: ${d.reason}` } : { permission: 'allow' };
     io.write(JSON.stringify(verdict) + '\n');
     return 0;
   }
-  return fail(io, 'usage: ade hook claude session|prompt|tool, ade hook cursor shell');
+  return fail(io, 'usage: unslopped hook claude session|prompt|tool, unslopped hook cursor shell');
 }
 
 async function resolveIssue(io: Writer, config: Config, ref: string, deps: Deps): Promise<Issue> {
@@ -295,7 +295,7 @@ function createWorktree(io: Writer, root: string, config: Config, branch: string
     fail(io, `git worktree add failed: ${r.err || r.out}`);
     return null;
   }
-  for (const rel of [CONFIG_FILE, '.gitignore', path.join('.ade', 'skills'), path.join('.ade', 'profile.md')]) {
+  for (const rel of [CONFIG_FILE, '.gitignore', path.join('.unslopped', 'skills'), path.join('.unslopped', 'profile.md')]) {
     const src = path.join(root, rel);
     const dst = path.join(dir, rel);
     if (fs.existsSync(src) && !fs.existsSync(dst)) {
@@ -320,11 +320,11 @@ function cmdRed(io: Writer, root: string): number {
   if (!cycle) return 2;
   if (!config.commands.test) return fail(io, `commands.test is not set in ${CONFIG_FILE}`);
   const tests = changedTestFiles(root, cycle.startCommit, config.practices.testPatterns);
-  if (!tests.length) return fail(io, 'no test file changed since the cycle started. write the failing test first, then run ade red');
+  if (!tests.length) return fail(io, 'no test file changed since the cycle started. write the failing test first, then run unslopped red');
   const r = runCommand(config.commands.test, root);
   const d = digest(redactSecrets(r.output).text, { lines: config.tokens.outputLines });
   if (r.code === 0) {
-    out(io, 'tests pass. nothing is red. the new test must fail before you implement; make it fail for the right reason, then run ade red again');
+    out(io, 'tests pass. nothing is red. the new test must fail before you implement; make it fail for the right reason, then run unslopped red again');
     return 1;
   }
   cycle.red ??= [];
@@ -333,7 +333,7 @@ function cmdRed(io: Writer, root: string): number {
   saveState(root, state);
   out(io, `red recorded (exit ${r.code}) for ${tests.join(', ')}`);
   for (const l of d.text.split('\n')) out(io, `  ${l}`);
-  out(io, 'now implement until green, then: ade next');
+  out(io, 'now implement until green, then: unslopped next');
   return 0;
 }
 
@@ -346,7 +346,7 @@ async function cmdPr(io: Writer, root: string, args: string[], flags: Flags, dep
     const n = str(flags.number);
     return pullRequestStatus(io, root, config, state, deps, n ? Number(n) : null);
   }
-  if (args[0] && args[0] !== 'open') return fail(io, 'usage: ade pr [--draft], ade pr status [--number=<n>]');
+  if (args[0] && args[0] !== 'open') return fail(io, 'usage: unslopped pr [--draft], unslopped pr status [--number=<n>]');
   return openPullRequest(io, root, config, state, deps, { draft: flags.draft ? true : undefined });
 }
 
@@ -356,7 +356,7 @@ async function cmdReview(io: Writer, root: string, flags: Flags, deps: Deps): Pr
   const prNumber = str(flags.pr);
   if (prNumber !== null || flags.pr === true) {
     const n = Number(prNumber);
-    if (!Number.isInteger(n) || n <= 0) return fail(io, 'usage: ade review --pr=<number> [--file=review.md] [--approve] [--no-post]');
+    if (!Number.isInteger(n) || n <= 0) return fail(io, 'usage: unslopped review --pr=<number> [--file=review.md] [--approve] [--no-post]');
     deps = { ...deps, env: discoverSecrets({ tracker: { ...config.tracker, provider: 'github' } }, deps.env, root) };
     return reviewPullRequest(io, root, config, deps, n, flags);
   }
@@ -375,7 +375,7 @@ async function cmdReview(io: Writer, root: string, flags: Flags, deps: Deps): Pr
   } else if (config.practices.reviewCommand) {
     out(io, `running reviewer: ${config.practices.reviewCommand}`);
     const before = fs.existsSync(file) ? fs.statSync(file).mtimeMs : 0;
-    const r = runCommand(config.practices.reviewCommand, root, { env: { ADE_CYCLE_ID: cycle.id, ADE_BASE_COMMIT: cycle.startCommit ?? '', ADE_REVIEW_FILE: file, ADE_ROOT: root } });
+    const r = runCommand(config.practices.reviewCommand, root, { env: { UNSLOPPED_CYCLE_ID: cycle.id, UNSLOPPED_BASE_COMMIT: cycle.startCommit ?? '', UNSLOPPED_REVIEW_FILE: file, UNSLOPPED_ROOT: root } });
     if (r.code !== 0) {
       out(io, `reviewer exited ${r.code}`);
       out(io, digest(r.output, { lines: config.tokens.outputLines }).text);
@@ -387,14 +387,14 @@ async function cmdReview(io: Writer, root: string, flags: Flags, deps: Deps): Pr
   } else {
     text = deps.stdinText ?? readStdinText();
     source = 'stdin';
-    if (!text.trim()) return fail(io, 'usage: ade review --file=<review.md>, pipe the review on stdin, or set practices.reviewCommand');
+    if (!text.trim()) return fail(io, 'usage: unslopped review --file=<review.md>, pipe the review on stdin, or set practices.reviewCommand');
   }
   fs.writeFileSync(file, text.endsWith('\n') ? text : text + '\n');
   const counts = countFindings(text);
   cycle.review = { at: new Date().toISOString(), file: path.relative(root, file).replace(/\\/g, '/'), source, ...counts };
   saveState(root, state);
   out(io, `review recorded: ${cycle.review.file} (${counts.critical} critical, ${counts.major} major, ${counts.minor} minor, from ${source})`);
-  if (counts.critical) out(io, 'critical findings block release. fix them, commit, and run ade review again');
+  if (counts.critical) out(io, 'critical findings block release. fix them, commit, and run unslopped review again');
   return 0;
 }
 
@@ -421,12 +421,12 @@ async function cmdStart(io: Writer, root: string, args: string[], flags: Flags, 
     const selector = (str(flags['from-debt']) ?? 'cleanup') as DebtSelector;
     if (!DEBT_SELECTORS.includes(selector)) return fail(io, `unknown debt selector "${selector}". valid: ${DEBT_SELECTORS.join(', ')}`);
     sweep = selectDebt(root, selector);
-    if (!sweep.length) return fail(io, `no ${selector === 'all' ? 'sweepable' : selector} entries in the debt log. see: ade debt`);
+    if (!sweep.length) return fail(io, `no ${selector === 'all' ? 'sweepable' : selector} entries in the debt log. see: unslopped debt`);
     if (!goal) goal = sweepGoal(selector, sweep.length);
   }
-  if (!goal && !explicit) return fail(io, 'usage: ade start "<goal>" [--issue=KEY] [--no-issue] [--from-debt]');
+  if (!goal && !explicit) return fail(io, 'usage: unslopped start "<goal>" [--issue=KEY] [--no-issue] [--from-debt]');
   const state = loadState(root);
-  if (state.cycle) return fail(io, `cycle ${state.cycle.id} is active in phase ${state.cycle.phase}. finish it or run: ade reset`);
+  if (state.cycle) return fail(io, `cycle ${state.cycle.id} is active in phase ${state.cycle.phase}. finish it or run: unslopped reset`);
   if (!isRepo(root)) return fail(io, 'not a git repository. run git init first');
   config = autoDetect(io, root, config, deps.env);
   deps = { ...deps, env: discoverSecrets(config, deps.env, root) };
@@ -472,13 +472,13 @@ async function cmdStart(io: Writer, root: string, args: string[], flags: Flags, 
   saveState(work, { cycle });
   if (sweep) out(io, `plan seeded with ${sweep.length} debt item(s); they clear from the log when this cycle completes`);
   out(io, `started cycle ${cycle.id}`);
-  if (useWorktree) out(io, `worktree ${work}\ncd ${JSON.stringify(work)} before continuing. every ade command for this cycle runs there.`);
+  if (useWorktree) out(io, `worktree ${work}\ncd ${JSON.stringify(work)} before continuing. every unslopped command for this cycle runs there.`);
   if (issue) out(io, `issue ${issue.key}${issue.url ? ' ' + issue.url : ''}`);
   if (matches.length) out(io, `skills ${matches.map((m) => `${m.name} (${m.health}${m.strong ? ', reused' : ''})`).join(', ')}`);
   for (const m of matches.filter((m) => m.health === 'underperforming')) out(io, `WARN skill ${m.name} is underperforming (${m.runs} runs, ${m.gateFailures} gate failures). Fix its Notes during the monitor phase.`);
   if (prefs.length) out(io, `prefs  ${prefs.length} remembered, listed in the plan`);
   out(io, `phase plan (1/${PHASES.length})`);
-  out(io, `fill in ${plan}, then run: ade next`);
+  out(io, `fill in ${plan}, then run: unslopped next`);
   await notifyTracker({ config, cycle, event: { type: 'started', to: 'plan' }, io, env: deps.env, fetchImpl: deps.fetchImpl });
   return 0;
 }
@@ -508,7 +508,7 @@ async function gate(io: Writer, root: string, flags: Flags, advance: boolean, de
   }
   if (!result.pass) {
     saveState(root, state);
-    if (!flags.json) out(io, `\nfix the cause and run again. do not edit tests, ${CONFIG_FILE}, or .ade/state.json.`);
+    if (!flags.json) out(io, `\nfix the cause and run again. do not edit tests, ${CONFIG_FILE}, or .unslopped/state.json.`);
     return 1;
   }
   if (!advance) {
@@ -520,7 +520,7 @@ async function gate(io: Writer, root: string, flags: Flags, advance: boolean, de
   if (!following) {
     archiveCycle(root, cycle, 'complete');
     saveState(root, { cycle: null });
-    if (!flags.json) out(io, `\ncycle ${cycle.id} complete. archived to .ade/cycles/${cycle.id}.json`);
+    if (!flags.json) out(io, `\ncycle ${cycle.id} complete. archived to .unslopped/cycles/${cycle.id}.json`);
     if (cycle.worktree && !flags.json) out(io, `worktree ${cycle.worktree} kept. once the branch is merged: git worktree remove ${JSON.stringify(cycle.worktree)}`);
     if (config.memory.skills) {
       const learned = learnFromCycle(root, deps.home, cycle, 'complete');
@@ -540,7 +540,7 @@ async function gate(io: Writer, root: string, flags: Flags, advance: boolean, de
     }
     if (cycle.debt?.length) {
       const cleared = removeDebtEntries(root, cycle.debt);
-      if (cleared && !flags.json) out(io, `cleared ${cleared} swept entrie(s) from .ade/DEBT.md`);
+      if (cleared && !flags.json) out(io, `cleared ${cleared} swept entrie(s) from .unslopped/DEBT.md`);
     }
     if (!flags.json) {
       const candidates = nextCycleCandidates(root, cycle);
@@ -554,13 +554,13 @@ async function gate(io: Writer, root: string, flags: Flags, advance: boolean, de
   if (!flags.json) {
     out(io, `\nnow in phase ${following} (${phaseIndex(following)}/${PHASES.length})`);
     out(io, `gate: ${describeGate(following, config)}`);
-    if (following === 'deploy' && config.deploy.requireApproval) out(io, 'deploy needs a human: ade approve deploy');
-    if (following === 'release' && config.practices.reviewApproval) out(io, 'release needs a reviewer: ade approve review');
+    if (following === 'deploy' && config.deploy.requireApproval) out(io, 'deploy needs a human: unslopped approve deploy');
+    if (following === 'release' && config.practices.reviewApproval) out(io, 'release needs a reviewer: unslopped approve review');
   }
   if (from === 'release' && config.practices.pullRequest.auto && !cycle.pr) {
     const prDeps = { ...deps, env: discoverSecrets({ tracker: { ...config.tracker, provider: 'github' } }, deps.env, root) };
     const code = await openPullRequest(io, root, config, state, prDeps);
-    if (code !== 0 && !flags.json) out(io, 'WARN pull request not opened. run ade pr when the repository and token are available');
+    if (code !== 0 && !flags.json) out(io, 'WARN pull request not opened. run unslopped pr when the repository and token are available');
   }
   await notifyTracker({ config, cycle, event: { type: 'advanced', from, to: following }, io, env: deps.env, fetchImpl: deps.fetchImpl });
   return 0;
@@ -570,7 +570,7 @@ function cmdApprove(io: Writer, root: string, args: string[]): number {
   const config = requireConfig(io, root);
   if (!config) return 2;
   const what = args[0];
-  if (!['deploy', 'config', 'review'].includes(what)) return fail(io, 'usage: ade approve deploy|config|review');
+  if (!['deploy', 'config', 'review'].includes(what)) return fail(io, 'usage: unslopped approve deploy|config|review');
   const state = loadState(root);
   const cycle = requireCycle(io, state);
   if (!cycle) return 2;
@@ -662,7 +662,7 @@ async function cmdReset(io: Writer, root: string, args: string[], flags: Flags, 
   if (!cycle) return 2;
   archiveCycle(root, cycle, 'abandoned');
   saveState(root, { cycle: null });
-  out(io, `abandoned cycle ${cycle.id}. archived to .ade/cycles/${cycle.id}.json`);
+  out(io, `abandoned cycle ${cycle.id}. archived to .unslopped/cycles/${cycle.id}.json`);
   if (cycle.worktree) out(io, `worktree ${cycle.worktree} kept. remove it with: git worktree remove ${JSON.stringify(cycle.worktree)}`);
   if (config?.memory.skills) {
     const learned = learnFromCycle(root, deps.home, cycle, 'abandoned');
@@ -692,7 +692,7 @@ function cmdSkills(io: Writer, root: string, flags: Flags, deps: Deps): number {
     return 0;
   }
   if (!skills.length) {
-    out(io, 'no skills yet. ADE saves one from every completed cycle.');
+    out(io, 'no skills yet. Unslopped saves one from every completed cycle.');
     return 0;
   }
   for (const s of skills) out(io, `${s.name.padEnd(42)} ${health(s).padEnd(16)} runs ${String(s.runs).padStart(3)}  failures ${String(s.gateFailures).padStart(3)}  ${s.scope}`);
@@ -709,7 +709,7 @@ function cmdSkill(io: Writer, root: string, args: string[], flags: Flags, deps: 
   }
   if (action === 'save') {
     const title = rest.join(' ').trim();
-    if (!title) return fail(io, 'usage: ade skill save "<title>" [--file=notes.md] [--global]');
+    if (!title) return fail(io, 'usage: unslopped skill save "<title>" [--file=notes.md] [--global]');
     const file = str(flags.file);
     const body = file ? fs.readFileSync(file, 'utf8') : deps.stdinText ?? readStdinText();
     const r = saveSkill(flags.global ? globalSkillsDir(deps.home) : skillsDir(root), title, body);
@@ -723,7 +723,7 @@ function cmdSkill(io: Writer, root: string, args: string[], flags: Flags, deps: 
     out(io, `removed ${s.file}`);
     return 0;
   }
-  return fail(io, 'usage: ade skill show|save|rm');
+  return fail(io, 'usage: unslopped skill show|save|rm');
 }
 
 function cmdDebt(io: Writer, root: string, args: string[], flags: Flags): number {
@@ -733,7 +733,7 @@ function cmdDebt(io: Writer, root: string, args: string[], flags: Flags): number
   if (!what) {
     const entries = listDebt(root);
     if (!entries.length) {
-      out(io, 'no debt logged. when you spot a deviation you are not fixing here: ade debt "<what>" --where=<path> --category=cleanup|pattern|soon|accepted');
+      out(io, 'no debt logged. when you spot a deviation you are not fixing here: unslopped debt "<what>" --where=<path> --category=cleanup|pattern|soon|accepted');
       return 0;
     }
     for (const c of DEBT_CATEGORIES) {
@@ -749,7 +749,7 @@ function cmdDebt(io: Writer, root: string, args: string[], flags: Flags): number
   const cycle = loadState(root).cycle;
   const line = addDebt(root, category, what, str(flags.where), cycle?.id ?? null);
   out(io, `logged: ${line}`);
-  out(io, 'commit .ade/DEBT.md with the cycle so the log travels with the code');
+  out(io, 'commit .unslopped/DEBT.md with the cycle so the log travels with the code');
   return 0;
 }
 
@@ -760,7 +760,7 @@ function cmdDecide(io: Writer, root: string, args: string[]): number {
   if (!title) {
     const decisions = listDecisions(root);
     if (!decisions.length) {
-      out(io, 'no decisions recorded. when a choice others must follow is made: ade decide "<title>"');
+      out(io, 'no decisions recorded. when a choice others must follow is made: unslopped decide "<title>"');
       return 0;
     }
     for (const d of decisions) out(io, `${String(d.number).padStart(4, '0')}  ${d.status.padEnd(10)} ${d.title}  (${d.file})`);
@@ -769,13 +769,13 @@ function cmdDecide(io: Writer, root: string, args: string[]): number {
   const cycle = loadState(root).cycle;
   const r = createDecision(root, title, cycle?.id ?? null);
   out(io, `wrote ${r.file}`);
-  out(io, 'fill in Context, Decision, Options considered (real ones, with why they lost) and Consequences, then commit it. the code map indexes it, so ade graph why will find it');
+  out(io, 'fill in Context, Decision, Options considered (real ones, with why they lost) and Consequences, then commit it. the code map indexes it, so unslopped graph why will find it');
   return 0;
 }
 
 function cmdPrefer(io: Writer, root: string, args: string[], flags: Flags, deps: Deps): number {
   const statement = args.join(' ').trim();
-  if (!statement) return fail(io, 'usage: ade prefer "<statement>" [--project]');
+  if (!statement) return fail(io, 'usage: unslopped prefer "<statement>" [--project]');
   const file = flags.project ? profilePath(root) : globalProfilePath(deps.home);
   const added = addPreference(file, statement);
   out(io, added ? `remembered (${flags.project ? 'project' : 'global'}): ${statement}` : `already remembered: ${statement}`);
@@ -786,7 +786,7 @@ function cmdProfile(io: Writer, root: string, deps: Deps): number {
   refreshDetected(root);
   const lines = readProfile(root, deps.home);
   if (!lines.length) {
-    out(io, 'no preferences yet. add one with: ade prefer "<statement>"');
+    out(io, 'no preferences yet. add one with: unslopped prefer "<statement>"');
     return 0;
   }
   for (const l of lines) out(io, l);
@@ -834,7 +834,7 @@ function cmdGraph(io: Writer, root: string, args: string[], flags: Flags): numbe
     return null;
   };
   if (args[0] === 'node') {
-    if (!args[1]) return fail(io, 'usage: ade graph node <file>');
+    if (!args[1]) return fail(io, 'usage: unslopped graph node <file>');
     const file = resolve(args[1]);
     if (!file) return 2;
     const v = nodeView(graph, file);
@@ -844,7 +844,7 @@ function cmdGraph(io: Writer, root: string, args: string[], flags: Flags): numbe
     return 0;
   }
   if (args[0] === 'path') {
-    if (!args[1] || !args[2]) return fail(io, 'usage: ade graph path <from> <to>');
+    if (!args[1] || !args[2]) return fail(io, 'usage: unslopped graph path <from> <to>');
     const from = resolve(args[1]);
     if (!from) return 2;
     const to = resolve(args[2]);
@@ -860,7 +860,7 @@ function cmdGraph(io: Writer, root: string, args: string[], flags: Flags): numbe
   }
   if (args[0] === 'why') {
     const topic = args.slice(1).join(' ').trim();
-    if (!topic) return fail(io, 'usage: ade graph why "<topic>"');
+    if (!topic) return fail(io, 'usage: unslopped graph why "<topic>"');
     const hits = queryRationale(graph, topic, Number(flags.limit) || 8);
     if (flags.json) out(io, JSON.stringify(hits, null, 2));
     else if (!hits.length) out(io, 'no rationale, constraint or debt marker matches. comments that say because, so that, to avoid, must, never, TODO or FIXME are what this reads');
@@ -921,7 +921,7 @@ function cmdMetrics(io: Writer, root: string, flags: Flags): number {
     return 0;
   }
   if (!cycles.length) {
-    out(io, 'no cycles yet. metrics appear after the first ade cycle.');
+    out(io, 'no cycles yet. metrics appear after the first unslopped cycle.');
     return 0;
   }
   for (const l of metricsLines(m)) out(io, l);
@@ -930,7 +930,7 @@ function cmdMetrics(io: Writer, root: string, flags: Flags): number {
 
 function cmdRecall(io: Writer, root: string, args: string[], flags: Flags, deps: Deps): number {
   const query = args.join(' ').trim();
-  if (!query) return fail(io, 'usage: ade recall "<words>" [--limit=5] [--json]');
+  if (!query) return fail(io, 'usage: unslopped recall "<words>" [--limit=5] [--json]');
   const limit = Number(flags.limit) || 5;
   const results = recall(root, deps.home, query, limit);
   if (flags.json) {
@@ -955,7 +955,7 @@ export async function main(argv: string[], root: string, io: Writer = process.st
   const d: Deps = {
     env,
     fetchImpl: deps.fetchImpl ?? (globalThis.fetch as Deps['fetchImpl']),
-    home: deps.home ?? env.ADE_HOME ?? os.homedir(),
+    home: deps.home ?? env.UNSLOPPED_HOME ?? os.homedir(),
     stderr: deps.stderr ?? process.stderr,
     stdin: deps.stdin,
     stdinText: deps.stdinText,

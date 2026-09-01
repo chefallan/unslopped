@@ -179,7 +179,7 @@ test('the debt log takes one-liners, lists by category, shows in status', () => 
   r = cli(dir, 'debt');
   assert.match(r.out, /cleanup \(1\)\n  - six copies/);
   r = cli(dir, 'status');
-  assert.match(r.out, /debt  1 cleanup, 1 soon, 1 accepted \(ade debt\)/);
+  assert.match(r.out, /debt  1 cleanup, 1 soon, 1 accepted \(unslopped debt\)/);
 });
 
 test('style flags issue references in comments, bundled test names', () => {

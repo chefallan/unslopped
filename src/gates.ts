@@ -34,7 +34,7 @@ function shownOutput(ctx: GateContext, name: string, output: string): string {
 function commandCheck(name: string, cmd: string | null, ctx: GateContext, { required = false } = {}): Check {
   if (!cmd) {
     return required
-      ? check(name, false, `commands.${name} is not set in ade.config.json`)
+      ? check(name, false, `commands.${name} is not set in unslopped.config.json`)
       : check(name, true, `no ${name} command configured, skipped`);
   }
   const r = runCommand(cmd, ctx.root);
@@ -138,7 +138,7 @@ function deployGate(ctx: GateContext): Check[] {
   const checks: Array<Check | null> = [];
   if (ctx.config.deploy.requireApproval) {
     const approved = ctx.cycle.approvals?.deploy;
-    checks.push(check('approval', Boolean(approved), approved ? `approved at ${approved.at}` : 'a human must run: ade approve deploy'));
+    checks.push(check('approval', Boolean(approved), approved ? `approved at ${approved.at}` : 'a human must run: unslopped approve deploy'));
     if (!approved) return present(checks);
   }
   const rollback = rollbackCheck(ctx);
@@ -150,7 +150,7 @@ function deployGate(ctx: GateContext): Check[] {
 
 function operateGate(ctx: GateContext): Check[] {
   const c = commandCheck('healthcheck', ctx.config.commands.healthcheck, ctx);
-  if (!c.ok && ctx.config.commands.rollback) c.detail += `\nhealthcheck failed after deploy. a human can undo it with: ade rollback (${ctx.config.commands.rollback})`;
+  if (!c.ok && ctx.config.commands.rollback) c.detail += `\nhealthcheck failed after deploy. a human can undo it with: unslopped rollback (${ctx.config.commands.rollback})`;
   return [c];
 }
 

@@ -64,9 +64,9 @@ export function detectTracker(root: string, env: Env = process.env): Detection {
     if (env.JIRA_BASE_URL) found.jira.baseUrl = env.JIRA_BASE_URL;
   }
   if (env.GITHUB_TOKEN || env.GH_TOKEN) pick('github', `${env.GITHUB_TOKEN ? 'GITHUB_TOKEN' : 'GH_TOKEN'} is set`);
-  if (env.ADE_WEBHOOK_URL) {
-    pick('webhook', 'ADE_WEBHOOK_URL is set');
-    found.webhook.url = env.ADE_WEBHOOK_URL;
+  if (env.UNSLOPPED_WEBHOOK_URL) {
+    pick('webhook', 'UNSLOPPED_WEBHOOK_URL is set');
+    found.webhook.url = env.UNSLOPPED_WEBHOOK_URL;
   }
 
   const text = HINT_FILES.map((f) => readText(path.join(root, f))).join('\n');

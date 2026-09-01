@@ -18,15 +18,15 @@ test('claude hooks read the event from stdin, use its cwd', () => {
 
   let r = run(elsewhere, { cwd: dir, hook_event_name: 'SessionStart' }, 'hook', 'claude', 'session');
   assert.equal(r.code, 0);
-  assert.match(r.out, /# ADE SDLC protocol/);
+  assert.match(r.out, /# Unslopped SDLC protocol/);
   assert.match(r.out, /no active cycle/);
 
   r = run(elsewhere, { cwd: dir, prompt: 'Add /health endpoint for APP-3' }, 'hook', 'claude', 'prompt');
   assert.equal(r.code, 0);
-  assert.match(r.out, /ade start "Add \/health endpoint for APP-3"/);
+  assert.match(r.out, /unslopped start "Add \/health endpoint for APP-3"/);
   assert.match(r.out, /Issue APP-3 will be linked/);
 
-  r = run(elsewhere, { cwd: dir, tool_name: 'Bash', tool_input: { command: 'ade approve deploy' } }, 'hook', 'claude', 'tool');
+  r = run(elsewhere, { cwd: dir, tool_name: 'Bash', tool_input: { command: 'unslopped approve deploy' } }, 'hook', 'claude', 'tool');
   assert.equal(r.code, 2);
   assert.match(r.err, /for humans/);
   assert.equal(r.out, '');
@@ -54,9 +54,9 @@ test('cursor shell hook answers with a permission object', () => {
   assert.deepEqual(verdict, { permission: 'allow' });
 });
 
-test('install, uninstall honor ADE_HOME', () => {
+test('install, uninstall honor UNSLOPPED_HOME', () => {
   const home = tmpDir();
-  const env = { ...process.env, ...NO_TRACKER_ENV, ADE_HOME: home, APPDATA: path.join(home, 'AppData', 'Roaming'), XDG_CONFIG_HOME: path.join(home, '.config') };
+  const env = { ...process.env, ...NO_TRACKER_ENV, UNSLOPPED_HOME: home, APPDATA: path.join(home, 'AppData', 'Roaming'), XDG_CONFIG_HOME: path.join(home, '.config') };
   let r = spawnSync(process.execPath, [BIN, 'install', '--only=claude,codex,opencode'], { encoding: 'utf8', env });
   assert.equal(r.status, 0);
   assert.match(r.stdout, /settings\.json/);
@@ -72,9 +72,9 @@ test('init --all writes every project target', () => {
   const dir = tmpDir();
   const r = run(dir, null, 'init', '--all');
   assert.equal(r.code, 0);
-  for (const f of ['AGENTS.md', '.clinerules/ade.md', '.roo/rules/ade.md', '.kilocode/rules/ade.md', '.junie/guidelines.md', '.kiro/steering/ade.md', 'CONVENTIONS.md', '.goosehints', 'WARP.md', '.rules']) {
+  for (const f of ['AGENTS.md', '.clinerules/unslopped.md', '.roo/rules/unslopped.md', '.kilocode/rules/unslopped.md', '.junie/guidelines.md', '.kiro/steering/unslopped.md', 'CONVENTIONS.md', '.goosehints', 'WARP.md', '.rules']) {
     assert.ok(fs.existsSync(path.join(dir, f)), f);
   }
-  const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'ade.config.json'), 'utf8'));
+  const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'unslopped.config.json'), 'utf8'));
   assert.ok(cfg.assistants.includes('roo'));
 });

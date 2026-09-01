@@ -8,11 +8,11 @@ import { tokenize, rank, snippet } from './search.ts';
 import type { Cycle, Env, HistoryEntry, Skill, SkillHealth, SkillMatch, SkillMeta } from './types.ts';
 
 export function homeDir(env: Env = process.env): string {
-  return env.ADE_HOME ?? os.homedir();
+  return env.UNSLOPPED_HOME ?? os.homedir();
 }
 
 export function globalDir(home: string): string {
-  return path.join(home, '.ade');
+  return path.join(home, '.unslopped');
 }
 
 export function skillsDir(root: string): string {
@@ -178,7 +178,7 @@ function changedFiles(root: string, since: string | null): string[] {
   const args = since ? ['diff', '--name-only', `${since}..HEAD`] : ['show', '--name-only', '--format=', 'HEAD'];
   const r = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
   if (r.status !== 0) return [];
-  return r.stdout.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('.ade/'));
+  return r.stdout.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('.unslopped/'));
 }
 
 interface FailureSummary {
@@ -298,7 +298,7 @@ export function learnFromCycle(root: string, home: string, cycle: Cycle, status:
     mergeFailureLines('', failures),
     '',
     '## Notes',
-    monitor || 'Add what a future run must know. This section is never overwritten by ADE.',
+    monitor || 'Add what a future run must know. This section is never overwritten by Unslopped.',
     '',
   ].join('\n');
   const file = path.join(dir, `${name}.md`);

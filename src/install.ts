@@ -5,8 +5,8 @@ import { protocol, START, END } from './protocol.ts';
 import { upsertBlock } from './init.ts';
 import type { Env } from './types.ts';
 
-const CMD = 'ade';
-const OURS = /\bade\s+hook\b/;
+const CMD = 'unslopped';
+const OURS = /\b(?:unslopped|ade)\s+hook\b/;
 
 type Json = Record<string, any>;
 
@@ -104,12 +104,12 @@ export const GLOBAL_TARGETS: Record<string, GlobalTarget> = {
   codex: { kind: 'markdown', file: (h) => path.join(h, '.codex', 'AGENTS.md') },
   gemini: { kind: 'markdown', file: (h) => path.join(h, '.gemini', 'GEMINI.md') },
   windsurf: { kind: 'markdown', file: (h) => path.join(h, '.codeium', 'windsurf', 'memories', 'global_rules.md') },
-  copilot: { kind: 'markdown', file: (h, env, platform) => path.join(vscodeUserDir(h, env, platform), 'prompts', 'ade.instructions.md'), header: COPILOT_HEADER },
+  copilot: { kind: 'markdown', file: (h, env, platform) => path.join(vscodeUserDir(h, env, platform), 'prompts', 'unslopped.instructions.md'), header: COPILOT_HEADER },
   opencode: { kind: 'markdown', file: (h, env) => path.join(env.XDG_CONFIG_HOME ?? path.join(h, '.config'), 'opencode', 'AGENTS.md') },
-  cline: { kind: 'markdown', file: (h) => path.join(h, 'Documents', 'Cline', 'Rules', 'ade.md') },
-  roo: { kind: 'markdown', file: (h) => path.join(h, '.roo', 'rules', 'ade.md') },
-  kilo: { kind: 'markdown', file: (h) => path.join(h, '.kilocode', 'rules', 'ade.md') },
-  continue: { kind: 'markdown', file: (h) => path.join(h, '.continue', 'rules', 'ade.md') },
+  cline: { kind: 'markdown', file: (h) => path.join(h, 'Documents', 'Cline', 'Rules', 'unslopped.md') },
+  roo: { kind: 'markdown', file: (h) => path.join(h, '.roo', 'rules', 'unslopped.md') },
+  kilo: { kind: 'markdown', file: (h) => path.join(h, '.kilocode', 'rules', 'unslopped.md') },
+  continue: { kind: 'markdown', file: (h) => path.join(h, '.continue', 'rules', 'unslopped.md') },
   goose: { kind: 'markdown', file: (h, env) => path.join(env.XDG_CONFIG_HOME ?? path.join(h, '.config'), 'goose', '.goosehints') },
 };
 

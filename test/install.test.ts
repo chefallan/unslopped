@@ -20,25 +20,25 @@ test('install writes every global target, is idempotent', () => {
   for (const key of ['codex', 'gemini', 'windsurf', 'copilot', 'opencode', 'cline', 'roo', 'kilo', 'continue', 'goose']) {
     const text = fs.readFileSync(targetPath(home, key, env(home), 'linux'), 'utf8');
     assert.equal(count(text, START), 1, key);
-    assert.match(text, /ade next/);
-    assert.doesNotMatch(text, /npx awesome-delivery-engine/);
+    assert.match(text, /unslopped next/);
+    assert.doesNotMatch(text, /npx unslopped/);
   }
   assert.match(fs.readFileSync(targetPath(home, 'copilot', env(home), 'linux'), 'utf8'), /^---\napplyTo: "\*\*"/);
   assert.equal(targetPath(home, 'opencode', env(home), 'linux'), path.join(home, '.config', 'opencode', 'AGENTS.md'));
-  assert.equal(targetPath(home, 'cline', env(home), 'linux'), path.join(home, 'Documents', 'Cline', 'Rules', 'ade.md'));
+  assert.equal(targetPath(home, 'cline', env(home), 'linux'), path.join(home, 'Documents', 'Cline', 'Rules', 'unslopped.md'));
   const claude = JSON.parse(fs.readFileSync(path.join(home, '.claude', 'settings.json'), 'utf8'));
   assert.equal(claude.hooks.UserPromptSubmit.length, 1);
-  assert.equal(claude.hooks.UserPromptSubmit[0].hooks[0].command, 'ade hook claude prompt');
+  assert.equal(claude.hooks.UserPromptSubmit[0].hooks[0].command, 'unslopped hook claude prompt');
   assert.equal(claude.hooks.PreToolUse[0].matcher, 'Bash|Edit|Write|MultiEdit|NotebookEdit');
   const cursor = JSON.parse(fs.readFileSync(path.join(home, '.cursor', 'hooks.json'), 'utf8'));
   assert.equal(cursor.version, 1);
-  assert.equal(cursor.hooks.beforeShellExecution[0].command, 'ade hook cursor shell');
+  assert.equal(cursor.hooks.beforeShellExecution[0].command, 'unslopped hook cursor shell');
 });
 
 test('copilot path follows the platform', () => {
   const home = tmpDir();
-  assert.equal(targetPath(home, 'copilot', env(home), 'win32'), path.join(home, 'AppData', 'Roaming', 'Code', 'User', 'prompts', 'ade.instructions.md'));
-  assert.equal(targetPath(home, 'copilot', {}, 'darwin'), path.join(home, 'Library', 'Application Support', 'Code', 'User', 'prompts', 'ade.instructions.md'));
+  assert.equal(targetPath(home, 'copilot', env(home), 'win32'), path.join(home, 'AppData', 'Roaming', 'Code', 'User', 'prompts', 'unslopped.instructions.md'));
+  assert.equal(targetPath(home, 'copilot', {}, 'darwin'), path.join(home, 'Library', 'Application Support', 'Code', 'User', 'prompts', 'unslopped.instructions.md'));
 });
 
 test('existing claude settings, hooks survive install, uninstall', () => {

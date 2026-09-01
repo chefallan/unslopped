@@ -71,7 +71,7 @@ test('redaction removes tokens from output while keeping the rest readable', () 
   assert.equal(redactSecrets('nothing here').count, 0);
 });
 
-test('credentials in ade.config.json are refused', () => {
+test('credentials in unslopped.config.json are refused', () => {
   assert.equal(configSecretProblem({ commands: { test: 'npm test' }, tracker: { provider: 'linear' } }), null);
   const bad = configSecretProblem({ commands: { deploy: `curl -H "Authorization: Bearer ${'t'.repeat(40)}" https://x` } });
   assert.match(bad!, /bearer token.*credentials belong in environment variables/);
@@ -102,7 +102,7 @@ test('style scan flags dashes, filler in comments, prose, comment-heavy files', 
   const rules = styleDefaults();
   const hits = scanStyle(
     [
-      line('README.md', 'ADE is a gatekeeper — it runs commands'),
+      line('README.md', `Unslopped is a gatekeeper ${String.fromCharCode(0x2014)} it runs commands`),
       line('README.md', 'It is very fast and basically free', 2),
       line('src/a.ts', 'const just = "just a string, not a comment"'),
       line('src/a.ts', '// simply increment the counter', 2),
@@ -147,7 +147,7 @@ test('style gate runs on the diff, can be disabled', () => {
   assert.equal(loadConfig(off)!.practices.style!.maxCommentRatio, 0.5);
 });
 
-test('ADE itself passes its own style rules', () => {
+test('Unslopped itself passes its own style rules', () => {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const rules = styleDefaults();
   const files = ['README.md', 'LICENSE', ...fs.readdirSync(path.join(root, 'src')).map((f) => `src/${f}`), ...fs.readdirSync(path.join(root, 'test')).map((f) => `test/${f}`)];

@@ -47,7 +47,7 @@ export interface Graph {
   files: Record<string, FileNode>;
 }
 
-export const DEFAULT_IGNORE = ['node_modules', '.git', '.ade', 'dist', 'build', 'out', 'target', 'vendor', 'coverage', '.next', '.nuxt', '.venv', 'venv', '__pycache__', '.cache', '.idea', '.vscode', '.terraform'];
+export const DEFAULT_IGNORE = ['node_modules', '.git', '.unslopped', 'dist', 'build', 'out', 'target', 'vendor', 'coverage', '.next', '.nuxt', '.venv', 'venv', '__pycache__', '.cache', '.idea', '.vscode', '.terraform'];
 
 export function graphDefaults(): GraphConfig {
   return { enabled: true, maxFiles: 20000, maxFileKb: 512, ignore: [...DEFAULT_IGNORE] };
@@ -473,7 +473,7 @@ export function report(graph: Graph): string {
   lines.push('', '## Entry points', ...(s.entryPoints.length ? s.entryPoints.map((f) => `- ${f}`) : ['- none detected']));
   const docs = Object.entries(graph.files).filter(([, n]) => n.headings.length).slice(0, 6);
   if (docs.length) lines.push('', '## Docs', ...docs.map(([f, n]) => `- ${f}: ${n.headings.slice(0, 5).join(' | ')}`));
-  lines.push('', 'Query: ade graph "<words>"');
+  lines.push('', 'Query: unslopped graph "<words>"');
   return lines.join('\n') + '\n';
 }
 
@@ -524,7 +524,7 @@ export function formatHits(hits: GraphHit[]): string[] {
   return lines;
 }
 
-export function graphContext(graph: Graph, prompt: string, cmd = 'ade', limit = 3): string[] {
+export function graphContext(graph: Graph, prompt: string, cmd = 'unslopped', limit = 3): string[] {
   const hits = queryGraph(graph, prompt, limit);
   if (!hits.length) return [`Code map: ${Object.keys(graph.files).length} files indexed. Before reading or searching files, run ${cmd} graph "<words>" and read only what it points to.`];
   const lines = ['Code map for this request (read these before searching):'];
@@ -687,12 +687,12 @@ export function fullReport(graph: Graph): string {
   if (debt.length) {
     lines.push('', `## Technical debt (${debt.length} marker${debt.length === 1 ? '' : 's'})`);
     for (const r of debt.slice(0, 8)) lines.push(`- ${r.file}:${r.line} ${r.text}`);
-    if (debt.length > 8) lines.push(`- +${debt.length - 8} more: ade graph why "todo"`);
+    if (debt.length > 8) lines.push(`- +${debt.length - 8} more: unslopped graph why "todo"`);
   }
   lines.push('', '## Suggested queries');
-  for (const g of s.godFiles.slice(0, 3)) lines.push(`- ade graph node ${g.file}`);
-  if (s.entryPoints[0] && s.godFiles[0]) lines.push(`- ade graph path ${s.entryPoints[0]} ${s.godFiles[0].file}`);
-  lines.push('- ade graph why "<topic>"', '- ade graph impact', '- ade graph "<words from the request>"');
+  for (const g of s.godFiles.slice(0, 3)) lines.push(`- unslopped graph node ${g.file}`);
+  if (s.entryPoints[0] && s.godFiles[0]) lines.push(`- unslopped graph path ${s.entryPoints[0]} ${s.godFiles[0].file}`);
+  lines.push('- unslopped graph why "<topic>"', '- unslopped graph impact', '- unslopped graph "<words from the request>"');
   return lines.join('\n') + '\n';
 }
 
@@ -758,7 +758,7 @@ export function htmlPage(graph: Graph, maxNodes = MAX_HTML_NODES): string {
   const data = JSON.stringify({ builtAt: graph.builtAt, total: Object.keys(graph.files).length, nodes, edges }).replace(/<\//g, '<\\/');
   return `<!doctype html>
 <meta charset="utf-8">
-<title>ADE code map</title>
+<title>Unslopped code map</title>
 <style>
 body{margin:0;font:13px/1.4 system-ui,sans-serif;background:#12141a;color:#d8dbe2;display:flex;height:100vh;overflow:hidden}
 canvas{flex:1;display:block;cursor:grab}
@@ -771,7 +771,7 @@ a{color:#8fb4ff;cursor:pointer;text-decoration:none}a:hover{text-decoration:unde
 </style>
 <canvas id="c"></canvas>
 <div id="side">
-<h1>ADE code map</h1>
+<h1>Unslopped code map</h1>
 <input id="q" placeholder="filter by file or symbol">
 <div id="info" class="m">Click a node. Drag to move. Wheel to zoom.</div>
 </div>
@@ -823,7 +823,7 @@ cv.addEventListener('mousemove',e=>{if(!drag)return;if(drag.pan){ox=e.offsetX-dr
 window.addEventListener('mouseup',()=>{drag=null;});
 cv.addEventListener('wheel',e=>{e.preventDefault();const f=e.deltaY<0?1.1:0.9;const mx=e.offsetX,my=e.offsetY;ox=mx-(mx-ox)*f;oy=my-(my-oy)*f;zoom*=f;},{passive:false});
 q.addEventListener('input',()=>{filter=q.value.trim();});
-document.title='ADE code map: '+DATA.total+' files';
+document.title='Unslopped code map: '+DATA.total+' files';
 </script>
 `;
 }

@@ -6,7 +6,7 @@ import { mergePractices, practiceDefaults } from './practices.ts';
 import { graphDefaults, mergeGraph } from './graph.ts';
 import type { Commands, Config } from './types.ts';
 
-export const CONFIG_FILE = 'ade.config.json';
+export const CONFIG_FILE = 'unslopped.config.json';
 export const ASSISTANTS = ['agents', 'claude', 'cursor', 'copilot', 'windsurf', 'gemini'];
 
 const EMPTY_COMMANDS: Commands = {

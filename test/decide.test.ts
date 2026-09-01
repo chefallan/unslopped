@@ -19,7 +19,7 @@ test('decision records are numbered, listed, indexed by the rationale miner', ()
   r = cli(dir, 'decide', 'Offset pagination for list endpoints');
   assert.equal(r.code, 0);
   assert.match(r.out, /wrote docs\/decisions\/0001-offset-pagination-for-list-endpoints\.md/);
-  assert.match(r.out, /ade graph why will find it/);
+  assert.match(r.out, /unslopped graph why will find it/);
   const text = fs.readFileSync(path.join(dir, 'docs', 'decisions', '0001-offset-pagination-for-list-endpoints.md'), 'utf8');
   assert.match(text, /^# Decision 0001: Offset pagination for list endpoints/);
   assert.match(text, /Status: proposed/);

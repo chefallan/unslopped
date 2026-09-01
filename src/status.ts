@@ -5,7 +5,7 @@ import { configHash, CONFIG_FILE } from './config.ts';
 import { debtCounts } from './debt.ts';
 import type { Config, State } from './types.ts';
 
-export function statusLines(root: string, config: Config, state: State, cmd = 'ade'): string[] {
+export function statusLines(root: string, config: Config, state: State, cmd = 'unslopped'): string[] {
   const debt = debtCounts(root);
   if (!state.cycle) return [`no active cycle. run: ${cmd} start "<goal>"`, ...(debt ? [`debt  ${debt} (${cmd} debt)`] : [])];
   const c = state.cycle;

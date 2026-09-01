@@ -257,16 +257,16 @@ test('start refuses protected branches, suggests one, approve review, rollback w
 
   r = cli(dir, 'approve', 'review');
   assert.equal(r.code, 0);
-  const state = JSON.parse(fs.readFileSync(path.join(dir, '.ade', 'state.json'), 'utf8'));
+  const state = JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'state.json'), 'utf8'));
   assert.ok(state.cycle.approvals.review.at);
 
   r = cli(dir, 'rollback');
   assert.equal(r.code, 0);
   assert.match(r.out, /undone/);
   assert.match(r.out, /rollback ok/);
-  const after = JSON.parse(fs.readFileSync(path.join(dir, '.ade', 'state.json'), 'utf8'));
+  const after = JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'state.json'), 'utf8'));
   assert.equal(after.cycle.history.at(-1).checks[0].name, 'rollback');
 
-  assert.equal(toolDecision(dir, 'Bash', { command: 'ade rollback' }).block, true);
+  assert.equal(toolDecision(dir, 'Bash', { command: 'unslopped rollback' }).block, true);
   assert.equal(cli(dir, 'approve', 'bogus').code, 2);
 });

@@ -38,7 +38,7 @@ test('start --issue links the issue, next posts comments, transitions to the web
     writeConfig(dir, { test: PASS }, { tracker: { provider: 'webhook', transitions: { code: 'In Progress', done: 'Done' } } });
     git(dir, 'add', '.');
     git(dir, 'commit', '-q', '-m', 'cfg');
-    const env = { ADE_WEBHOOK_URL: url, ADE_WEBHOOK_TOKEN: 'secret' };
+    const env = { UNSLOPPED_WEBHOOK_URL: url, UNSLOPPED_WEBHOOK_TOKEN: 'secret' };
 
     let r = await cli(dir, env, 'tracker');
     assert.equal(r.code, 0);
@@ -49,7 +49,7 @@ test('start --issue links the issue, next posts comments, transitions to the web
     assert.equal(r.code, 0);
     assert.match(r.out, /issue ABC-1/);
     const id = r.out.match(/started cycle (\S+)/)[1];
-    const plan = path.join(dir, '.ade', 'plans', `${id}.md`);
+    const plan = path.join(dir, '.unslopped', 'plans', `${id}.md`);
     assert.match(fs.readFileSync(plan, 'utf8'), /Issue: ABC-1/);
     assert.equal(received.length, 1);
     assert.equal(received[0].auth, 'Bearer secret');
@@ -83,7 +83,7 @@ test('start --issue without a provider records the key, warns', async () => {
   assert.equal(r.code, 0);
   assert.match(r.out, /WARN tracker.provider is not set/);
   assert.match(r.out, /started cycle/);
-  const state = JSON.parse(fs.readFileSync(path.join(dir, '.ade', 'state.json'), 'utf8'));
+  const state = JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'state.json'), 'utf8'));
   assert.equal(state.cycle.issue.key, 'X-9');
   assert.equal(state.cycle.goal, 'Do thing');
 });
@@ -103,20 +103,20 @@ test('issues are inferred from the goal, the branch, --no-issue opts out', async
   let r = await cli(dir, {}, 'start', 'Fix', 'login', 'per', 'ENG-12');
   assert.equal(r.code, 0);
   assert.match(r.out, /linked issue ENG-12 found in the goal/);
-  let state = JSON.parse(fs.readFileSync(path.join(dir, '.ade', 'state.json'), 'utf8'));
+  let state = JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'state.json'), 'utf8'));
   assert.equal(state.cycle.issue.key, 'ENG-12');
   await cli(dir, {}, 'reset');
 
   r = await cli(dir, {}, 'start', '--no-issue', 'Fix', 'ENG-12');
   assert.equal(r.code, 0);
-  state = JSON.parse(fs.readFileSync(path.join(dir, '.ade', 'state.json'), 'utf8'));
+  state = JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'state.json'), 'utf8'));
   assert.equal(state.cycle.issue, null);
   await cli(dir, {}, 'reset');
 
   git(dir, 'checkout', '-q', '-b', 'alice/app-77-add-health');
   r = await cli(dir, {}, 'start', 'Add health endpoint');
   assert.match(r.out, /linked issue APP-77 found in branch alice\/app-77-add-health/);
-  state = JSON.parse(fs.readFileSync(path.join(dir, '.ade', 'state.json'), 'utf8'));
+  state = JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'state.json'), 'utf8'));
   assert.equal(state.cycle.issue.key, 'APP-77');
   assert.equal(state.cycle.goal, 'Add health endpoint');
 });
@@ -129,18 +129,18 @@ test('start detects a tracker from the git remote, saves it before hashing the c
     writeConfig(dir, { test: PASS });
     git(dir, 'add', '.');
     git(dir, 'commit', '-q', '-m', 'cfg');
-    const r = await cli(dir, { ADE_WEBHOOK_URL: url }, 'start', 'Ship ABC-3');
+    const r = await cli(dir, { UNSLOPPED_WEBHOOK_URL: url }, 'start', 'Ship ABC-3');
     assert.equal(r.code, 0);
-    assert.match(r.out, /detected tracker webhook \(ADE_WEBHOOK_URL is set\), saved/);
-    const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'ade.config.json'), 'utf8'));
+    assert.match(r.out, /detected tracker webhook \(UNSLOPPED_WEBHOOK_URL is set\), saved/);
+    const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'unslopped.config.json'), 'utf8'));
     assert.equal(cfg.tracker.provider, 'webhook');
     assert.equal(received.length, 1);
     assert.match(received[0].body.body, /started: Ship ABC-3/);
     git(dir, 'add', '.');
     git(dir, 'commit', '-q', '-m', 'save tracker');
-    const plan = path.join(dir, '.ade', 'plans', `${r.out.match(/started cycle (\S+)/)[1]}.md`);
+    const plan = path.join(dir, '.unslopped', 'plans', `${r.out.match(/started cycle (\S+)/)[1]}.md`);
     fs.writeFileSync(plan, fs.readFileSync(plan, 'utf8').replace('- [ ]', '- [ ] ok'));
-    const n = await cli(dir, { ADE_WEBHOOK_URL: url }, 'next');
+    const n = await cli(dir, { UNSLOPPED_WEBHOOK_URL: url }, 'next');
     assert.equal(n.code, 0);
     assert.doesNotMatch(n.out, /changed during this cycle/);
   } finally {
@@ -155,7 +155,7 @@ test('init detects github from the remote, records the repo', async () => {
   const r = await cli(dir, {}, 'init', '--only=agents');
   assert.equal(r.code, 0);
   assert.match(r.out, /tracker: github \(git remote origin is github.com\/acme\/app\)/);
-  const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'ade.config.json'), 'utf8'));
+  const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'unslopped.config.json'), 'utf8'));
   assert.equal(cfg.tracker.provider, 'github');
   assert.equal(cfg.tracker.github.repo, 'acme/app');
 });
@@ -165,7 +165,7 @@ test('init --tracker sets the provider', async () => {
   const r = await cli(dir, {}, 'init', '--only=agents', '--tracker=linear');
   assert.equal(r.code, 0);
   assert.match(r.out, /tracker: linear/);
-  const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'ade.config.json'), 'utf8'));
+  const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'unslopped.config.json'), 'utf8'));
   assert.equal(cfg.tracker.provider, 'linear');
   assert.equal((await cli(dir, {}, "init", "--tracker=trello")).code, 2);
 });

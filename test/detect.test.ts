@@ -5,7 +5,7 @@ import path from 'node:path';
 import { detectTracker, findIssueRef, githubRepoFromUrl, applyDetection, currentBranch } from '../src/detect.ts';
 import { tmpDir, initRepo, git } from './helpers.ts';
 
-const NONE = { LINEAR_API_KEY: '', JIRA_API_TOKEN: '', JIRA_BASE_URL: '', GITHUB_TOKEN: '', GH_TOKEN: '', ADE_WEBHOOK_URL: '' };
+const NONE = { LINEAR_API_KEY: '', JIRA_API_TOKEN: '', JIRA_BASE_URL: '', GITHUB_TOKEN: '', GH_TOKEN: '', UNSLOPPED_WEBHOOK_URL: '' };
 
 test('githubRepoFromUrl handles ssh, https remotes', () => {
   assert.equal(githubRepoFromUrl('git@github.com:acme/app.git'), 'acme/app');
@@ -21,7 +21,7 @@ test('env vars decide the provider first', () => {
   assert.equal(jira.provider, 'jira');
   assert.equal(jira.jira.baseUrl, 'https://a.atlassian.net');
   assert.equal(detectTracker(tmpDir(), { ...NONE, GH_TOKEN: 't' }).provider, 'github');
-  const hook = detectTracker(tmpDir(), { ...NONE, ADE_WEBHOOK_URL: 'https://h' });
+  const hook = detectTracker(tmpDir(), { ...NONE, UNSLOPPED_WEBHOOK_URL: 'https://h' });
   assert.equal(hook.provider, 'webhook');
   assert.equal(hook.webhook.url, 'https://h');
   assert.equal(detectTracker(tmpDir(), NONE).provider, null);

@@ -75,7 +75,7 @@ test('githubClient sends auth headers, hits the right endpoints', async () => {
     const body = url.includes('state=open') ? [] : { number: 5, html_url: 'https://github.com/o/r/pull/5', head: { ref: 'f', sha: 's' }, base: { ref: 'main', sha: 'b' }, state: 'open', merged: false, merged_at: null, draft: false, title: 't', body: '' };
     return { ok: true, status: 200, text: async () => JSON.stringify(body) };
   };
-  const c = githubClient('o/r', 'tok', { ADE_GITHUB_API: 'https://api.example/' }, f as any);
+  const c = githubClient('o/r', 'tok', { UNSLOPPED_GITHUB_API: 'https://api.example/' }, f as any);
   assert.equal(await findOpenPr(c, 'feat'), null);
   assert.equal(calls[0].url, 'https://api.example/repos/o/r/pulls?state=open&head=o%3Afeat');
   assert.equal(calls[0].headers.Authorization, 'Bearer tok');

@@ -122,7 +122,7 @@ test('github parses refs, comments, labels, closes', async () => {
 
 test('webhook posts events, needs no fetch for issues', async () => {
   const { f, calls } = fakeFetch([{ status: 200, body: {} }, { status: 200, body: {} }]);
-  const t = createTracker(config({ provider: 'webhook', webhook: { url: 'https://hook.example/x' } }), { ADE_WEBHOOK_TOKEN: 's3' }, f);
+  const t = createTracker(config({ provider: 'webhook', webhook: { url: 'https://hook.example/x' } }), { UNSLOPPED_WEBHOOK_TOKEN: 's3' }, f);
   const issue = await t.fetchIssue('ABC-1');
   assert.equal(issue.key, 'ABC-1');
   assert.equal(calls.length, 0);

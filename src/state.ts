@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { PHASES } from './phases.ts';
 import type { Cycle, Issue, State } from './types.ts';
 
-export const STATE_DIR = '.ade';
+export const STATE_DIR = '.unslopped';
 
 export function stateDir(root: string): string {
   return path.join(root, STATE_DIR);

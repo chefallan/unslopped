@@ -44,7 +44,7 @@ export function nextCycleCandidates(root: string, cycle: Cycle, limit = 4): Cand
 }
 
 export function formatCandidates(candidates: Candidate[]): string[] {
-  return ['next cycle candidates, offer them rather than starting one unasked:', ...candidates.map((c) => `  ade start ${JSON.stringify(c.goal)}   (${c.source})`)];
+  return ['next cycle candidates, offer them rather than starting one unasked:', ...candidates.map((c) => `  unslopped start ${JSON.stringify(c.goal)}   (${c.source})`)];
 }
 
 export const DEBT_SELECTORS = ['cleanup', 'pattern', 'soon', 'all'] as const;

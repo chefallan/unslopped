@@ -43,7 +43,7 @@ export function commitsSince(sha: string | null, cwd: string): number {
 }
 
 export function lastCommitMs(cwd: string): number | null {
-  const r = git(['log', '-1', '--format=%cI', '--', '.', ':(exclude).ade'], cwd);
+  const r = git(['log', '-1', '--format=%cI', '--', '.', ':(exclude).unslopped'], cwd);
   if (!r.ok || !r.out) return null;
   const t = Date.parse(r.out);
   return Number.isNaN(t) ? null : t;
@@ -99,7 +99,7 @@ export function untrackedFiles(cwd: string): string[] {
 
 export function changedFiles(cwd: string, since: string | null): string[] {
   const tracked = since ? lines(git(['diff', '--name-only', since], cwd).out) : lines(git(['diff', '--name-only', 'HEAD'], cwd).out);
-  return [...new Set([...tracked, ...untrackedFiles(cwd)])].filter((f) => !f.startsWith('.ade/'));
+  return [...new Set([...tracked, ...untrackedFiles(cwd)])].filter((f) => !f.startsWith('.unslopped/'));
 }
 
 function countLines(file: string): number {
@@ -119,11 +119,11 @@ export function diffLines(cwd: string, since: string | null): number {
   let total = 0;
   for (const line of lines(r.out)) {
     const [added, deleted, file] = line.split('\t');
-    if (!file || file.startsWith('.ade/')) continue;
+    if (!file || file.startsWith('.unslopped/')) continue;
     total += (Number(added) || 0) + (Number(deleted) || 0);
   }
   for (const f of untrackedFiles(cwd)) {
-    if (f.startsWith('.ade/')) continue;
+    if (f.startsWith('.unslopped/')) continue;
     total += countLines(path.join(cwd, f));
   }
   return total;
@@ -166,7 +166,7 @@ export function parseUnifiedDiff(text: string): AddedLine[] {
 export function addedLines(cwd: string, since: string | null): AddedLine[] {
   const out: AddedLine[] = parseUnifiedDiff(git(['diff', '--unified=0', since ?? 'HEAD'], cwd).out);
   for (const f of untrackedFiles(cwd)) {
-    if (f.startsWith('.ade/')) continue;
+    if (f.startsWith('.unslopped/')) continue;
     const full = path.join(cwd, f);
     try {
       const stat = fs.statSync(full);

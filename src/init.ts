@@ -18,19 +18,19 @@ export const TARGETS: Record<string, Target> = {
   claude: { file: 'CLAUDE.md' },
   gemini: { file: 'GEMINI.md' },
   copilot: { file: path.join('.github', 'copilot-instructions.md') },
-  windsurf: { file: path.join('.windsurf', 'rules', 'ade.md') },
+  windsurf: { file: path.join('.windsurf', 'rules', 'unslopped.md') },
   cursor: {
-    file: path.join('.cursor', 'rules', 'ade.mdc'),
-    header: '---\ndescription: ADE SDLC protocol\nalwaysApply: true\n---\n\n',
+    file: path.join('.cursor', 'rules', 'unslopped.mdc'),
+    header: '---\ndescription: Unslopped SDLC protocol\nalwaysApply: true\n---\n\n',
   },
-  cline: { file: path.join('.clinerules', 'ade.md') },
-  roo: { file: path.join('.roo', 'rules', 'ade.md') },
-  kilo: { file: path.join('.kilocode', 'rules', 'ade.md') },
-  continue: { file: path.join('.continue', 'rules', 'ade.md') },
+  cline: { file: path.join('.clinerules', 'unslopped.md') },
+  roo: { file: path.join('.roo', 'rules', 'unslopped.md') },
+  kilo: { file: path.join('.kilocode', 'rules', 'unslopped.md') },
+  continue: { file: path.join('.continue', 'rules', 'unslopped.md') },
   junie: { file: path.join('.junie', 'guidelines.md') },
-  amazonq: { file: path.join('.amazonq', 'rules', 'ade.md') },
-  kiro: { file: path.join('.kiro', 'steering', 'ade.md') },
-  augment: { file: path.join('.augment', 'rules', 'ade.md') },
+  amazonq: { file: path.join('.amazonq', 'rules', 'unslopped.md') },
+  kiro: { file: path.join('.kiro', 'steering', 'unslopped.md') },
+  augment: { file: path.join('.augment', 'rules', 'unslopped.md') },
   trae: { file: path.join('.trae', 'rules', 'project_rules.md') },
   aider: { file: 'CONVENTIONS.md' },
   goose: { file: '.goosehints' },
@@ -41,11 +41,16 @@ export const TARGETS: Record<string, Target> = {
 
 export const ALL_ASSISTANTS = Object.keys(TARGETS);
 
+const LEGACY_START = '<!-- ade:start -->';
+const LEGACY_END = '<!-- ade:end -->';
+
 export function upsertBlock(existing: string, block: string): string {
-  const s = existing.indexOf(START);
-  const e = existing.indexOf(END);
-  if (s !== -1 && e !== -1 && e > s) {
-    return existing.slice(0, s) + block.trimEnd() + existing.slice(e + END.length);
+  for (const [start, end] of [[START, END], [LEGACY_START, LEGACY_END]]) {
+    const s = existing.indexOf(start);
+    const e = existing.indexOf(end);
+    if (s !== -1 && e !== -1 && e > s) {
+      return existing.slice(0, s) + block.trimEnd() + existing.slice(e + end.length);
+    }
   }
   if (!existing.trim()) return block;
   return existing.trimEnd() + '\n\n' + block;
@@ -68,7 +73,7 @@ function writeTarget(root: string, key: string, pointer = false): string {
 function ensureGitignore(root: string): boolean {
   const file = path.join(root, '.gitignore');
   const existing = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  const wanted = ['.ade/state.json', '.ade/cycles/', '.ade/history.jsonl', '.ade/logs/', '.ade/worktrees/', '.ade/graph.json', '.ade/graph.html', '.ade/GRAPH.md'];
+  const wanted = ['.unslopped/state.json', '.unslopped/cycles/', '.unslopped/history.jsonl', '.unslopped/logs/', '.unslopped/worktrees/', '.unslopped/graph.json', '.unslopped/graph.html', '.unslopped/GRAPH.md'];
   const missing = wanted.filter((w) => !existing.split(/\r?\n/).includes(w));
   if (missing.length === 0) return false;
   fs.writeFileSync(file, (existing.trimEnd() + '\n' + missing.join('\n') + '\n').replace(/^\n/, ''));
@@ -96,10 +101,10 @@ export interface InitResult {
   gitHooks: string[];
 }
 
-export const CI_WORKFLOW_FILE = path.join('.github', 'workflows', 'ade-review.yml');
+export const CI_WORKFLOW_FILE = path.join('.github', 'workflows', 'unslopped-review.yml');
 
 export function ciWorkflow(): string {
-  return `name: ADE review
+  return `name: Unslopped review
 
 on:
   pull_request:
@@ -119,8 +124,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Review the pull request with ADE
-        run: npx -y awesome-delivery-engine review --pr=\${{ github.event.pull_request.number }}
+      - name: Review the pull request with Unslopped
+        run: npx -y unslopped review --pr=\${{ github.event.pull_request.number }}
         env:
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: \${{ github.repository }}
@@ -129,8 +134,9 @@ jobs:
 `;
 }
 
-const GIT_HOOK_MARK = '# ade: refresh the code map';
-const GIT_HOOK_LINE = 'command -v ade >/dev/null 2>&1 && ade graph refresh --quiet >/dev/null 2>&1 || true';
+const GIT_HOOK_MARK = '# unslopped: refresh the code map';
+const LEGACY_GIT_HOOK_MARK = '# ade: refresh the code map';
+const GIT_HOOK_LINE = 'command -v unslopped >/dev/null 2>&1 && unslopped graph refresh --quiet >/dev/null 2>&1 || true';
 
 export function installGitHooks(root: string): string[] {
   const hooksDir = path.join(root, '.git', 'hooks');
@@ -139,7 +145,7 @@ export function installGitHooks(root: string): string[] {
   for (const name of ['post-commit', 'post-checkout', 'post-merge']) {
     const file = path.join(hooksDir, name);
     const existing = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-    if (existing.includes(GIT_HOOK_MARK)) continue;
+    if (existing.includes(GIT_HOOK_MARK) || existing.includes(LEGACY_GIT_HOOK_MARK)) continue;
     const next = existing.trim() ? `${existing.trimEnd()}\n${GIT_HOOK_MARK}\n${GIT_HOOK_LINE}\n` : `#!/bin/sh\n${GIT_HOOK_MARK}\n${GIT_HOOK_LINE}\n`;
     fs.writeFileSync(file, next);
     try {

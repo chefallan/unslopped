@@ -49,7 +49,7 @@ test('rationale shows up in the report, node view, why query, prompt context, ht
   const report = fullReport(graph);
   assert.match(report, /## Design rationale \(from comments and docs\)\n- docs\/DESIGN\.md:3 Why regex: No native dependencies\.\n- src\/cache\.ts:1 We cap the cache/);
   assert.match(report, /## Technical debt \(1 marker\)\n- src\/cache\.ts:3 TODO evict by age/);
-  assert.match(report, /- ade graph why "<topic>"\n- ade graph impact/);
+  assert.match(report, /- unslopped graph why "<topic>"\n- unslopped graph impact/);
   assert.match(formatNode(nodeView(graph, 'src/cache.ts')!).join('\n'), /rationale\n    :1 \[why\] We cap the cache/);
   const why = queryRationale(graph, 'cache latency');
   assert.equal(why[0].file, 'src/cache.ts');
@@ -131,7 +131,7 @@ test('changed lines come from unified diffs, PR patches, the working tree', () =
   assert.deepEqual(changes.get('src/new.ts'), [1]);
 });
 
-test('ade graph why, ade graph impact from the CLI', () => {
+test('unslopped graph why, unslopped graph impact from the CLI', () => {
   const dir = tmpDir();
   initRepo(dir);
   writeConfig(dir, { test: PASS });

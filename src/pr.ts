@@ -56,7 +56,7 @@ async function tellTracker(config: Config, cycle: Cycle, message: string, transi
 export async function openPullRequest(io: Writer, root: string, config: Config, state: State, deps: Deps, { draft }: { draft?: boolean } = {}): Promise<number> {
   const cycle = state.cycle;
   if (!cycle) {
-    out(io, 'error: no active cycle. run: ade start "<goal>"');
+    out(io, 'error: no active cycle. run: unslopped start "<goal>"');
     return 2;
   }
   const branch = currentBranch(root);
@@ -65,7 +65,7 @@ export async function openPullRequest(io: Writer, root: string, config: Config, 
     return 2;
   }
   if (config.practices.protectedBranches.includes(branch)) {
-    out(io, `error: ${branch} is a protected branch. work on a feature branch (ade start --worktree) and open the PR from there`);
+    out(io, `error: ${branch} is a protected branch. work on a feature branch (unslopped start --worktree) and open the PR from there`);
     return 2;
   }
   let gh: GithubClient;
@@ -111,7 +111,7 @@ export async function openPullRequest(io: Writer, root: string, config: Config, 
     cycle.pr = { number: pr.number, url: pr.html_url, head: branch, base: pr.base?.ref ?? base, at: new Date().toISOString(), merged: Boolean(pr.merged), mergedAt: pr.merged_at ?? null };
     saveState(root, state);
     out(io, `${existing ? 'found open' : 'opened'} pull request #${pr.number}: ${pr.html_url}`);
-    await tellTracker(config, cycle, `ade cycle ${cycle.id}: pull request ${existing ? 'linked' : 'opened'} ${pr.html_url}`, null, io, deps);
+    await tellTracker(config, cycle, `unslopped cycle ${cycle.id}: pull request ${existing ? 'linked' : 'opened'} ${pr.html_url}`, null, io, deps);
     return 0;
   } catch (e) {
     out(io, `error: ${(e as Error).message}`);
@@ -123,7 +123,7 @@ export async function pullRequestStatus(io: Writer, root: string, config: Config
   const cycle = state.cycle;
   const n = number ?? cycle?.pr?.number ?? null;
   if (!n) {
-    out(io, 'error: no pull request recorded for this cycle. run: ade pr, or pass --number=<n>');
+    out(io, 'error: no pull request recorded for this cycle. run: unslopped pr, or pass --number=<n>');
     return 2;
   }
   let gh: GithubClient;
@@ -146,7 +146,7 @@ export async function pullRequestStatus(io: Writer, root: string, config: Config
       saveState(root, state);
       if (newlyMerged) {
         const done = mergeTracker(config.tracker).transitions.done ?? null;
-        await tellTracker(config, cycle, `ade cycle ${cycle.id}: pull request merged ${pr.html_url}`, done, io, deps);
+        await tellTracker(config, cycle, `unslopped cycle ${cycle.id}: pull request merged ${pr.html_url}`, done, io, deps);
         if (cycle.issue) out(io, `issue ${cycle.issue.key} told the PR merged${done ? ` and moved to ${done}` : ''}`);
       }
     }
@@ -187,13 +187,13 @@ export async function reviewPullRequest(io: Writer, root: string, config: Config
       const before = fs.existsSync(reviewFile) ? fs.statSync(reviewFile).mtimeMs : 0;
       const r = runCommand(config.practices.reviewCommand, root, {
         env: {
-          ADE_PR_NUMBER: String(pr.number),
-          ADE_PR_URL: pr.html_url,
-          ADE_PR_DIFF_FILE: diffFile,
-          ADE_REVIEW_FILE: reviewFile,
-          ADE_BASE_COMMIT: pr.base.sha,
-          ADE_HEAD_COMMIT: pr.head.sha,
-          ADE_ROOT: root,
+          UNSLOPPED_PR_NUMBER: String(pr.number),
+          UNSLOPPED_PR_URL: pr.html_url,
+          UNSLOPPED_PR_DIFF_FILE: diffFile,
+          UNSLOPPED_REVIEW_FILE: reviewFile,
+          UNSLOPPED_BASE_COMMIT: pr.base.sha,
+          UNSLOPPED_HEAD_COMMIT: pr.head.sha,
+          UNSLOPPED_ROOT: root,
         },
       });
       if (r.code !== 0) {
@@ -244,7 +244,7 @@ export async function reviewPullRequest(io: Writer, root: string, config: Config
 
     if (flags['no-post']) return counts.critical ? 1 : 0;
     const allowed = new Map(files.map((f) => [f.filename, rightSideLines(f.patch)]));
-    const payload = reviewPayload(findings, allowed, { approve: Boolean(flags.approve), header: `ADE review of #${pr.number} at ${pr.head.sha.slice(0, 7)}` });
+    const payload = reviewPayload(findings, allowed, { approve: Boolean(flags.approve), header: `Unslopped review of #${pr.number} at ${pr.head.sha.slice(0, 7)}` });
     payload.body += impactNote;
     const posted = await createReview(gh, number, { commit_id: pr.head.sha, ...payload });
     out(io, `posted ${payload.event} review with ${payload.comments.length} inline comment(s): ${posted.html_url}`);

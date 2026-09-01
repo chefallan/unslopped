@@ -105,7 +105,7 @@ test('cursor, copilot get a pointer to AGENTS.md instead of a second protocol co
   const dir = tmpDir();
   init(dir, { env: NO_TRACKER_ENV });
   const agents = fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8');
-  const cursor = fs.readFileSync(path.join(dir, '.cursor/rules/ade.mdc'), 'utf8');
+  const cursor = fs.readFileSync(path.join(dir, '.cursor/rules/unslopped.mdc'), 'utf8');
   const copilot = fs.readFileSync(path.join(dir, '.github/copilot-instructions.md'), 'utf8');
   const claude = fs.readFileSync(path.join(dir, 'CLAUDE.md'), 'utf8');
   assert.match(agents, /## Phases/);
@@ -117,11 +117,11 @@ test('cursor, copilot get a pointer to AGENTS.md instead of a second protocol co
   assert.ok(cursor.length < agents.length / 3);
   const alone = tmpDir();
   init(alone, { only: ['cursor'], env: NO_TRACKER_ENV });
-  assert.match(fs.readFileSync(path.join(alone, '.cursor/rules/ade.mdc'), 'utf8'), /## Phases/);
+  assert.match(fs.readFileSync(path.join(alone, '.cursor/rules/unslopped.mdc'), 'utf8'), /## Phases/);
   const off = tmpDir();
-  fs.writeFileSync(path.join(off, 'ade.config.json'), JSON.stringify({ commands: { test: 'x' }, tokens: { pointerFiles: false } }));
+  fs.writeFileSync(path.join(off, 'unslopped.config.json'), JSON.stringify({ commands: { test: 'x' }, tokens: { pointerFiles: false } }));
   init(off, { env: NO_TRACKER_ENV });
-  assert.match(fs.readFileSync(path.join(off, '.cursor/rules/ade.mdc'), 'utf8'), /## Phases/);
+  assert.match(fs.readFileSync(path.join(off, '.cursor/rules/unslopped.mdc'), 'utf8'), /## Phases/);
 });
 
 test('the session hook does not repeat a protocol the project already carries', () => {
@@ -130,10 +130,10 @@ test('the session hook does not repeat a protocol the project already carries', 
   writeConfig(dir, { test: PASS });
   const withProtocol = sessionContext(dir);
   assert.match(withProtocol, /## Phases/);
-  fs.writeFileSync(path.join(dir, 'CLAUDE.md'), `${START}\nstuff\n<!-- ade:end -->\n`);
+  fs.writeFileSync(path.join(dir, 'CLAUDE.md'), `${START}\nstuff\n<!-- unslopped:end -->\n`);
   const slim = sessionContext(dir);
   assert.doesNotMatch(slim, /## Phases/);
-  assert.match(slim, /follow the ade block in CLAUDE\.md/);
+  assert.match(slim, /follow the unslopped block in CLAUDE\.md/);
   assert.match(slim, /no active cycle/);
   assert.ok(slim.length < withProtocol.length / 4);
 });

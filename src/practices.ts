@@ -132,7 +132,7 @@ const SECRET_PATTERNS: SecretPattern[] = [
   { name: 'credential assignment', re: /\b(api[_-]?key|secret|token|passw(or)?d)\b\s*[:=]\s*['"][A-Za-z0-9_\-/+=]{16,}['"]/i },
 ];
 
-const SCAN_SKIP = /(^|\/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|.*\.min\.js|.*\.map|.*\.svg|.*\.lock)$|^\.ade\//;
+const SCAN_SKIP = /(^|\/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|.*\.min\.js|.*\.map|.*\.svg|.*\.lock)$|^\.unslopped\//;
 const PLACEHOLDER = /(example|placeholder|your[_-]?|xxx+|changeme|dummy|redacted|<[^>]+>|\$\{[^}]+\}|process\.env|os\.environ|getenv)/i;
 const PLACEHOLDER_PASSWORD = /^(pass(word)?|secret|changeme|xxx+|\*+|\$\{|<|%)/i;
 const ENV_FILE = /(^|\/)\.env(\.[A-Za-z0-9_-]+)?$/;
@@ -216,7 +216,7 @@ export function configSecretProblem(config: unknown): string | null {
   const text = JSON.stringify(config, null, 1);
   for (const [i, line] of text.split('\n').entries()) {
     const name = lineSecret(line);
-    if (name) return `ade.config.json line ${i + 1} contains what looks like a ${name}. credentials belong in environment variables, never in the config`;
+    if (name) return `unslopped.config.json line ${i + 1} contains what looks like a ${name}. credentials belong in environment variables, never in the config`;
   }
   return null;
 }
@@ -266,7 +266,7 @@ export interface StyleHit {
   problem: string;
 }
 
-const STYLE_SKIP = /(^|\/)ade\.config\.json$/;
+const STYLE_SKIP = /(^|\/)unslopped\.config\.json$/;
 
 export function scanStyle(lines: Array<{ file: string; line: number; text: string }>, rules: StyleRules): StyleHit[] {
   const hits: StyleHit[] = [];
@@ -379,7 +379,7 @@ export function reviewApprovalCheck(ctx: GateContext): Check | null {
   const approved = ctx.cycle.approvals?.review;
   if (approved) return check('review approval', true, `approved at ${approved.at}`);
   const why = guarded.length ? `guarded paths were touched (${guarded.slice(0, 3).join(', ')}), so a human reader is required no matter how small the diff. ` : '';
-  return check('review approval', false, `${why}a human reviewer must run: ade approve review`);
+  return check('review approval', false, `${why}a human reviewer must run: unslopped approve review`);
 }
 
 export function rollbackCheck(ctx: GateContext): Check | null {
@@ -446,7 +446,7 @@ export function negativeCriterionCheck(ctx: GateContext, plan: string): Check | 
   return check('negative case', false, `this change touches guarded paths (${guarded.slice(0, 3).join(', ')}). add an acceptance criterion for what must be refused or fail, and a test for it`);
 }
 
-const NOT_SCOPED = /(^|\/)(\.gitignore|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|CHANGELOG[^/]*|.*\.lock)$|^\.ade\/|^\.github\//;
+const NOT_SCOPED = /(^|\/)(\.gitignore|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|CHANGELOG[^/]*|.*\.lock)$|^\.unslopped\/|^\.github\//;
 
 export function scopeCheck(ctx: GateContext, plan: string): Check | null {
   if (!ctx.config.practices.scope) return null;
@@ -592,7 +592,7 @@ export function redCheck(ctx: GateContext): Check | null {
   if (!source.length || !tests.length) return check('red before green', true, 'no source and test pair changed, nothing to prove');
   const runs = (ctx.cycle.red ?? []).filter((r) => r.code !== 0 && r.testFiles.some((f) => tests.includes(f)));
   if (runs.length) return check('red before green', true, `${runs.length} failing run(s) recorded before green, latest at ${runs[runs.length - 1].at}`);
-  return check('red before green', false, 'no failing test run recorded for the changed test files. write the test first, run `ade red` and watch it fail, then implement. set practices.tdd to false to drop this');
+  return check('red before green', false, 'no failing test run recorded for the changed test files. write the test first, run `unslopped red` and watch it fail, then implement. set practices.tdd to false to drop this');
 }
 
 export interface FindingCounts {
@@ -634,15 +634,15 @@ export function countFindings(text: string): FindingCounts {
 export function reviewArtifactCheck(ctx: GateContext, lastCommitMs: number | null): Check | null {
   if (!ctx.config.practices.reviewArtifact) return null;
   const r = ctx.cycle.review;
-  if (!r) return check('review artifact', false, 'no review recorded. run `ade review` (practices.reviewCommand, a second agent, or --file=<review.md>) before release');
-  if (r.critical > 0) return check('review artifact', false, `${r.critical} critical finding(s) in ${r.file}. fix them, commit, and run \`ade review\` again`);
-  if (lastCommitMs !== null && Date.parse(r.at) < lastCommitMs) return check('review artifact', false, `review at ${r.at} is older than the latest commit. run \`ade review\` again so the reviewed code is the released code`);
+  if (!r) return check('review artifact', false, 'no review recorded. run `unslopped review` (practices.reviewCommand, a second agent, or --file=<review.md>) before release');
+  if (r.critical > 0) return check('review artifact', false, `${r.critical} critical finding(s) in ${r.file}. fix them, commit, and run \`unslopped review\` again`);
+  if (lastCommitMs !== null && Date.parse(r.at) < lastCommitMs) return check('review artifact', false, `review at ${r.at} is older than the latest commit. run \`unslopped review\` again so the reviewed code is the released code`);
   return check('review artifact', true, `${r.file}: 0 critical, ${r.major} major, ${r.minor} minor, reviewed after the last commit`);
 }
 
 export function protectedBranchProblem(practices: Practices, branch: string | null, suggestion: string): string | null {
   if (!branch || !practices.protectedBranches.includes(branch)) return null;
-  return `branch "${branch}" is protected. create a working branch first: git checkout -b ${suggestion}\nor run the cycle in its own checkout: ade start --worktree "<goal>"\nor set practices.protectedBranches to [] in ade.config.json`;
+  return `branch "${branch}" is protected. create a working branch first: git checkout -b ${suggestion}\nor run the cycle in its own checkout: unslopped start --worktree "<goal>"\nor set practices.protectedBranches to [] in unslopped.config.json`;
 }
 
 export function branchSuggestion(goal: string, issueKey: string | null | undefined): string {

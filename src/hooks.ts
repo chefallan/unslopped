@@ -57,12 +57,12 @@ function accountHook(root: string, state: State, raw: number, shown: number): vo
   saveState(root, state);
 }
 
-export function sessionContext(root: string, cmd = 'ade', home = homeDir(), instructionFile = 'CLAUDE.md'): string {
+export function sessionContext(root: string, cmd = 'unslopped', home = homeDir(), instructionFile = 'CLAUDE.md'): string {
   if (!isRepo(root)) return '';
   const config = loadConfig(root);
   const full = protocolBody(cmd);
   const carried = projectCarriesProtocol(root, instructionFile);
-  const lines = [carried ? `ADE protocol: follow the ade block in ${instructionFile}. It is not repeated here.` : full, ''];
+  const lines = [carried ? `Unslopped protocol: follow the unslopped block in ${instructionFile}. It is not repeated here.` : full, ''];
   if (!config) {
     lines.push(`This project is not initialized. Run \`${cmd} init\` before any work.`);
     return lines.join('\n') + '\n';
@@ -86,24 +86,24 @@ export function sessionContext(root: string, cmd = 'ade', home = homeDir(), inst
   return text;
 }
 
-export function promptContext(root: string, prompt: string, cmd = 'ade', home = homeDir()): string {
+export function promptContext(root: string, prompt: string, cmd = 'unslopped', home = homeDir()): string {
   if (!isRepo(root)) return '';
   const config = loadConfig(root);
-  if (!config) return `ade: this project is not initialized. Run \`${cmd} init\` first, then handle the request.\n`;
+  if (!config) return `unslopped: this project is not initialized. Run \`${cmd} init\` first, then handle the request.\n`;
   const state = loadState(root);
   const p = String(prompt ?? '');
   if (config.memory.history && p.trim()) {
     appendHistory(root, { at: new Date().toISOString(), prompt: p.slice(0, 500), cycle: state.cycle?.id ?? null });
   }
   if (state.cycle) {
-    const text = ['ade: active cycle', ...statusLines(root, config, state, cmd).map((l) => '  ' + l), `Continue this cycle: \`${cmd} resume\` lists the next actions. Advance with \`${cmd} next\`.`, ...memoryLines(root, home, p, cmd, config.graph)].join('\n') + '\n';
+    const text = ['unslopped: active cycle', ...statusLines(root, config, state, cmd).map((l) => '  ' + l), `Continue this cycle: \`${cmd} resume\` lists the next actions. Advance with \`${cmd} next\`.`, ...memoryLines(root, home, p, cmd, config.graph)].join('\n') + '\n';
     accountHook(root, state, text.length, text.length);
     return text;
   }
   const goal = p.split(/\r?\n/).find((l) => l.trim())?.trim().slice(0, 120) ?? '';
   const provider = config.tracker.provider;
   const issue = findIssueRef(p, provider) ?? findIssueRef(currentBranch(root), provider, { branch: true });
-  const lines = ['ade: no active cycle.'];
+  const lines = ['unslopped: no active cycle.'];
   if (goal) lines.push(`If this request changes code, start one first: ${cmd} start ${JSON.stringify(goal)}`);
   lines.push('If it is more than a one-file change, ask the user two or three design questions first and record the options under "## Approach".');
   if (issue) lines.push(`Issue ${issue} will be linked.`);
@@ -116,8 +116,8 @@ export function promptContext(root: string, prompt: string, cmd = 'ade', home = 
 
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 const SHELL_TOOLS = new Set(['Bash', 'PowerShell', 'shell']);
-const STATE_PATH = /\.ade[\\/](state\.json|cycles)/;
-const READ_ONLY = /^\s*(cat|type|less|more|head|tail|grep|ade|npx\s+awesome-delivery-engine)\b/;
+const STATE_PATH = /\.unslopped[\\/](state\.json|cycles)/;
+const READ_ONLY = /^\s*(cat|type|less|more|head|tail|grep|unslopped|npx\s+unslopped)\b/;
 
 export interface Decision {
   block: boolean;
@@ -135,18 +135,18 @@ export function toolDecision(root: string, toolName: unknown, input: Record<stri
   const tool = String(toolName ?? '');
   if (EDIT_TOOLS.has(tool)) {
     const file = String(input.file_path ?? input.notebook_path ?? '');
-    if (STATE_PATH.test(file)) return block('.ade/state.json and .ade/cycles are written by ade only. Read state with `ade status --json`.');
-    if (active && /(^|[\\/])ade\.config\.json$/.test(file)) return block('ade.config.json cannot change during an active cycle. Ask the human to edit it and run `ade approve config`.');
+    if (STATE_PATH.test(file)) return block('.unslopped/state.json and .unslopped/cycles are written by unslopped only. Read state with `unslopped status --json`.');
+    if (active && /(^|[\\/])(?:unslopped|ade)\.config\.json$/.test(file)) return block('unslopped.config.json cannot change during an active cycle. Ask the human to edit it and run `unslopped approve config`.');
     return { block: false };
   }
   if (SHELL_TOOLS.has(tool)) {
     const c = String(input.command ?? '');
-    if (/\b(?:ade|awesome-delivery-engine)\s+(approve|reset|rollback)\b/.test(c)) return block('`ade approve`, `ade reset` and `ade rollback` are for humans. Ask the human to run it.');
+    if (/\b(?:unslopped|ade|awesome-delivery-engine)\s+(approve|reset|rollback)\b/.test(c)) return block('`unslopped approve`, `unslopped reset` and `unslopped rollback` are for humans. Ask the human to run it.');
     if (/--no-verify\b/.test(c)) return block('--no-verify is not allowed. Fix what the hook reports.');
     if (/\bgit\s+push\b[^|;&]*\s(--force|-f)\b/.test(c)) return block('force push is not allowed.');
-    if (STATE_PATH.test(c) && !READ_ONLY.test(c)) return block('.ade/state.json and .ade/cycles are written by ade only. Read state with `ade status --json`.');
-    if (active && /ade\.config\.json/.test(c) && /(>|\bsed\s+-i|\btee\b|\brm\b|\bmv\b|\bcp\b)/.test(c)) {
-      return block('ade.config.json cannot change during an active cycle. Ask the human to edit it and run `ade approve config`.');
+    if (STATE_PATH.test(c) && !READ_ONLY.test(c)) return block('.unslopped/state.json and .unslopped/cycles are written by unslopped only. Read state with `unslopped status --json`.');
+    if (active && /(?:unslopped|ade)\.config\.json/.test(c) && /(>|\bsed\s+-i|\btee\b|\brm\b|\bmv\b|\bcp\b)/.test(c)) {
+      return block('unslopped.config.json cannot change during an active cycle. Ask the human to edit it and run `unslopped approve config`.');
     }
   }
   return { block: false };

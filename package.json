@@ -1,10 +1,10 @@
 {
-  "name": "awesome-delivery-engine",
+  "name": "unslopped",
   "version": "0.1.0",
-  "description": "Awesome Delivery Engine (ade). A delivery gatekeeper for AI coding assistants: one prompt in, verified software out. Eight gated phases, tracker and PR integration, a code map, memory and delivery metrics.",
+  "description": "Awesome Delivery Engine (unslopped). A delivery gatekeeper for AI coding assistants: one prompt in, verified software out. Eight gated phases, tracker and PR integration, a code map, memory and delivery metrics.",
   "type": "module",
   "bin": {
-    "ade": "bin/ade.js"
+    "unslopped": "bin/unslopped.js"
   },
   "files": [
     "bin",
@@ -42,11 +42,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chefallan/awesome-delivery-engine.git"
+    "url": "git+https://github.com/chefallan/unslopped.git"
   },
-  "homepage": "https://github.com/chefallan/awesome-delivery-engine#readme",
+  "homepage": "https://github.com/chefallan/unslopped#readme",
   "bugs": {
-    "url": "https://github.com/chefallan/awesome-delivery-engine/issues"
+    "url": "https://github.com/chefallan/unslopped/issues"
   },
   "devDependencies": {
     "typescript": "^5.9.0",

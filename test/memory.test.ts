@@ -56,7 +56,7 @@ test('a completed cycle creates a skill with files, criteria, failures, notes', 
   assert.match(text, /- GET \/health returns 200/);
   assert.match(text, /test gate, test failed 1 time\(s\): AssertionError: expected 200/);
   assert.match(text, /## Notes\nLatency fine/);
-  assert.doesNotMatch(text, /\.ade\//);
+  assert.doesNotMatch(text, /\.unslopped\//);
   const again = learnFromCycle(dir, home, { ...cycle, id: 'other', usedSkills: [] }, 'complete');
   assert.equal(again.name, 'add-health-endpoint-2');
 });
@@ -86,7 +86,7 @@ test('matchSkills finds related skills, flags strong matches', () => {
   const home = tmpDir();
   const { dir, cycle } = repoWithCycle('Add health endpoint');
   learnFromCycle(dir, home, cycle, 'complete');
-  saveSkill(path.join(home, '.ade', 'skills'), 'Rotate database credentials', '## Notes\nuse vault\n');
+  saveSkill(path.join(home, '.unslopped', 'skills'), 'Rotate database credentials', '## Notes\nuse vault\n');
   const strong = matchSkills(dir, home, 'add a health endpoint for the load balancer');
   assert.equal(strong[0].name, 'add-health-endpoint');
   assert.equal(strong[0].strong, true);

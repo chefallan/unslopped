@@ -49,7 +49,7 @@ test('refreshGraph resolves imports, records uses, updates incrementally', () =>
   assert.deepEqual(g.files['src/main.ts'].external, ['express']);
   assert.deepEqual(g.files['src/main.ts'].uses, { 'src/util.ts': ['add', 'NAME'] });
   assert.deepEqual(g.files['src/index.ts'].imports, ['src/main.ts']);
-  assert.ok(fs.existsSync(path.join(dir, '.ade', 'graph.json')));
+  assert.ok(fs.existsSync(path.join(dir, '.unslopped', 'graph.json')));
 
   const second = refreshGraph(dir, graphDefaults());
   assert.equal(second.changed, 0);
@@ -93,7 +93,7 @@ test('query, report, prompt context surface the right files with little text', (
   assert.match(text, /# Code map: 5 files/);
   assert.match(text, /- src\/crypto\.ts: imported by 2, exports hash/);
   assert.match(text, /## Entry points\n- src\/app\.ts/);
-  assert.match(text, /Query: ade graph/);
+  assert.match(text, /Query: unslopped graph/);
 
   const ctx = graphContext(graph, 'invoice totals are wrong');
   assert.equal(ctx.length, 3);
@@ -148,13 +148,13 @@ test('node, path, cross-area report, html views', () => {
   const full = fullReport(graph);
   assert.match(full, /## Cross-area imports\n- scripts -> lib: 1 import\(s\)\n- src -> lib: 1 import\(s\)/);
   assert.match(full, /## Surprising connections[^\n]*\n- scripts\/report\.ts -> lib\/log\.ts uses log\n- src\/crypto\.ts -> lib\/log\.ts uses log/);
-  assert.match(full, /## Suggested queries\n- ade graph node/);
-  assert.match(full, /ade graph path src\/app\.ts /);
-  assert.ok(fs.existsSync(path.join(dir, '.ade', 'GRAPH.md')));
-  assert.ok(fs.existsSync(path.join(dir, '.ade', 'graph.html')));
+  assert.match(full, /## Suggested queries\n- unslopped graph node/);
+  assert.match(full, /unslopped graph path src\/app\.ts /);
+  assert.ok(fs.existsSync(path.join(dir, '.unslopped', 'GRAPH.md')));
+  assert.ok(fs.existsSync(path.join(dir, '.unslopped', 'graph.html')));
 
   const html = htmlPage(graph);
-  assert.match(html, /<title>ADE code map<\/title>/);
+  assert.match(html, /<title>Unslopped code map<\/title>/);
   assert.match(html, /"id":"src\/crypto\.ts"/);
   assert.match(html, /"edges":\[\["src\/auth\/login\.ts","src\/crypto\.ts"\]/);
   assert.doesNotMatch(html.slice(html.indexOf('const DATA')), /<\/script>[\s\S]*<\/script>/);
@@ -162,7 +162,7 @@ test('node, path, cross-area report, html views', () => {
   assert.equal((small.match(/"id":/g) ?? []).length, 2);
 });
 
-test('hooks refresh the map, inject code context; init installs git hooks; ade graph works from the CLI', () => {
+test('hooks refresh the map, inject code context; init installs git hooks; unslopped graph works from the CLI', () => {
   const dir = tmpDir();
   initRepo(dir);
   write(dir, 'src/payments.ts', 'export function chargeCard(amount: number) { return amount; }\n');
@@ -173,14 +173,14 @@ test('hooks refresh the map, inject code context; init installs git hooks; ade g
   const session = sessionContext(dir);
   assert.match(session, /## Code map \(\d+ files, \d+ symbols\)/);
   assert.match(session, /Areas: src \(1\)/);
-  assert.ok(fs.existsSync(path.join(dir, '.ade', 'graph.json')));
+  assert.ok(fs.existsSync(path.join(dir, '.unslopped', 'graph.json')));
 
   const r = init(dir, { env: NO_TRACKER_ENV, only: ['agents'] });
   assert.deepEqual(r.gitHooks, ['.git/hooks/post-commit', '.git/hooks/post-checkout', '.git/hooks/post-merge']);
   const hook = fs.readFileSync(path.join(dir, '.git', 'hooks', 'post-commit'), 'utf8');
-  assert.match(hook, /^#!\/bin\/sh\n# ade: refresh the code map\ncommand -v ade/);
+  assert.match(hook, /^#!\/bin\/sh\n# unslopped: refresh the code map\ncommand -v unslopped/);
   assert.deepEqual(init(dir, { env: NO_TRACKER_ENV, only: ['agents'] }).gitHooks, []);
-  assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /\.ade\/graph\.json/);
+  assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /\.unslopped\/graph\.json/);
 
   let c = cli(dir, 'graph', 'charge', 'card');
   assert.equal(c.code, 0);
@@ -202,17 +202,17 @@ test('hooks refresh the map, inject code context; init installs git hooks; ade g
   assert.equal(c.code, 1);
   assert.match(c.out, /not connected by imports/);
   c = cli(dir, 'graph', 'report');
-  assert.match(c.out, /wrote \.ade\/GRAPH\.md/);
-  assert.match(fs.readFileSync(path.join(dir, '.ade', 'GRAPH.md'), 'utf8'), /## Suggested queries/);
+  assert.match(c.out, /wrote \.unslopped\/GRAPH\.md/);
+  assert.match(fs.readFileSync(path.join(dir, '.unslopped', 'GRAPH.md'), 'utf8'), /## Suggested queries/);
   c = cli(dir, 'graph', 'html');
-  assert.match(c.out, /wrote \.ade\/graph\.html\. open it in a browser/);
-  assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /\.ade\/graph\.html\n\.ade\/GRAPH\.md/);
+  assert.match(c.out, /wrote \.unslopped\/graph\.html\. open it in a browser/);
+  assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /\.unslopped\/graph\.html\n\.unslopped\/GRAPH\.md/);
 
   git(dir, 'add', '.');
   git(dir, 'commit', '-q', '-m', 'chore: config');
   const s = cli(dir, 'start', 'refund a charged card');
   assert.equal(s.code, 0, s.out);
   const id = s.out.match(/started cycle (\S+)/)![1];
-  const plan = fs.readFileSync(path.join(dir, '.ade', 'plans', `${id}.md`), 'utf8');
+  const plan = fs.readFileSync(path.join(dir, '.unslopped', 'plans', `${id}.md`), 'utf8');
   assert.match(plan, /## Relevant code\n- src\/payments\.ts: chargeCard\(\):1/);
 });

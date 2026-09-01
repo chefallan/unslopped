@@ -38,7 +38,7 @@ export function requiredSettings(tracker: TrackerConfig, env: Env): Array<[strin
     case 'github':
       return [['GITHUB_TOKEN', env.GITHUB_TOKEN]];
     case 'webhook':
-      return [['tracker.webhook.url or ADE_WEBHOOK_URL', tracker.webhook?.url ?? env.ADE_WEBHOOK_URL]];
+      return [['tracker.webhook.url or UNSLOPPED_WEBHOOK_URL', tracker.webhook?.url ?? env.UNSLOPPED_WEBHOOK_URL]];
     default:
       return [];
   }
@@ -137,7 +137,7 @@ function github(tracker: TrackerConfig, env: Env, f: FetchLike): Tracker {
   const headers = {
     Authorization: `Bearer ${env.GITHUB_TOKEN}`,
     Accept: 'application/vnd.github+json',
-    'User-Agent': 'awesome-delivery-engine',
+    'User-Agent': 'unslopped',
     'Content-Type': 'application/json',
   };
   return {
@@ -161,9 +161,9 @@ function github(tracker: TrackerConfig, env: Env, f: FetchLike): Tracker {
 }
 
 function webhook(tracker: TrackerConfig, env: Env, f: FetchLike): Tracker {
-  const url = tracker.webhook.url ?? env.ADE_WEBHOOK_URL ?? '';
+  const url = tracker.webhook.url ?? env.UNSLOPPED_WEBHOOK_URL ?? '';
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (env.ADE_WEBHOOK_TOKEN) headers.Authorization = `Bearer ${env.ADE_WEBHOOK_TOKEN}`;
+  if (env.UNSLOPPED_WEBHOOK_TOKEN) headers.Authorization = `Bearer ${env.UNSLOPPED_WEBHOOK_TOKEN}`;
   const post = (payload: unknown) => request(f, url, { method: 'POST', headers, body: JSON.stringify(payload) });
   return {
     name: 'webhook',
@@ -194,13 +194,13 @@ export function createTracker(config: { tracker?: Partial<TrackerConfig> }, env:
 export function eventMessage(cycle: Cycle, event: TrackerEvent): string {
   switch (event.type) {
     case 'started':
-      return `ade cycle ${cycle.id} started: ${cycle.goal}`;
+      return `unslopped cycle ${cycle.id} started: ${cycle.goal}`;
     case 'advanced':
-      return `ade cycle ${cycle.id}: ${event.from} gate passed, now in ${event.to}`;
+      return `unslopped cycle ${cycle.id}: ${event.from} gate passed, now in ${event.to}`;
     case 'complete':
-      return `ade cycle ${cycle.id} complete after ${cycle.history.length} gate run(s)`;
+      return `unslopped cycle ${cycle.id} complete after ${cycle.history.length} gate run(s)`;
     case 'abandoned':
-      return `ade cycle ${cycle.id} abandoned in phase ${cycle.phase}`;
+      return `unslopped cycle ${cycle.id} abandoned in phase ${cycle.phase}`;
   }
 }
 

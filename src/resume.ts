@@ -1,7 +1,7 @@
 import { statusLines } from './status.ts';
 import type { Config, Cycle, Phase, State } from './types.ts';
 
-export function nextSteps(phase: Phase, config: Config, cycle: Cycle, cmd = 'ade'): string[] {
+export function nextSteps(phase: Phase, config: Config, cycle: Cycle, cmd = 'unslopped'): string[] {
   const p = config.practices;
   switch (phase) {
     case 'plan':
@@ -36,7 +36,7 @@ export function nextSteps(phase: Phase, config: Config, cycle: Cycle, cmd = 'ade
   }
 }
 
-export function resumeLines(root: string, config: Config, state: State, cmd = 'ade'): string[] {
+export function resumeLines(root: string, config: Config, state: State, cmd = 'unslopped'): string[] {
   const cycle = state.cycle;
   if (!cycle) return [`no active cycle. run: ${cmd} start "<goal>"`];
   const lines = statusLines(root, config, state, cmd);

@@ -30,21 +30,21 @@ test('init writes config, instruction files, plans dir, gitignore', () => {
   const r = init(dir, { env });
   assert.equal(r.configCreated, true);
   assert.equal(r.config.commands.test, 'npm test');
-  for (const f of ['AGENTS.md', 'CLAUDE.md', 'GEMINI.md', '.github/copilot-instructions.md', '.cursor/rules/ade.mdc', '.windsurf/rules/ade.md']) {
+  for (const f of ['AGENTS.md', 'CLAUDE.md', 'GEMINI.md', '.github/copilot-instructions.md', '.cursor/rules/unslopped.mdc', '.windsurf/rules/unslopped.md']) {
     const text = fs.readFileSync(path.join(dir, f), 'utf8');
     assert.equal(count(text, START), 1, f);
-    assert.match(text, /npx awesome-delivery-engine next/);
+    assert.match(text, /npx unslopped next/);
   }
-  assert.match(fs.readFileSync(path.join(dir, '.cursor/rules/ade.mdc'), 'utf8'), /^---\ndescription/);
-  assert.ok(fs.existsSync(path.join(dir, '.ade', 'plans')));
-  assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /\.ade\/state\.json/);
+  assert.match(fs.readFileSync(path.join(dir, '.cursor/rules/unslopped.mdc'), 'utf8'), /^---\ndescription/);
+  assert.ok(fs.existsSync(path.join(dir, '.unslopped', 'plans')));
+  assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /\.unslopped\/state\.json/);
 });
 
 test('init is idempotent, keeps an existing config', () => {
   const dir = tmpDir();
   fs.writeFileSync(path.join(dir, 'CLAUDE.md'), '# Rules\nkeep me\n');
   init(dir, { env });
-  fs.writeFileSync(path.join(dir, 'ade.config.json'), JSON.stringify({ commands: { test: 'custom' } }));
+  fs.writeFileSync(path.join(dir, 'unslopped.config.json'), JSON.stringify({ commands: { test: 'custom' } }));
   const r = init(dir, { env });
   assert.equal(r.configCreated, false);
   assert.equal(r.config.commands.test, 'custom');
@@ -52,7 +52,7 @@ test('init is idempotent, keeps an existing config', () => {
   assert.equal(count(claude, START), 1);
   assert.match(claude, /keep me/);
   const ignore = fs.readFileSync(path.join(dir, '.gitignore'), 'utf8');
-  assert.equal(count(ignore, '.ade/cycles/'), 1);
+  assert.equal(count(ignore, '.unslopped/cycles/'), 1);
 });
 
 test('init --only limits the files written', () => {

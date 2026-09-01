@@ -59,10 +59,10 @@ function cli(cwd: string, env: Record<string, string>, args: string[], input?: s
 }
 
 function readState(dir: string) {
-  return JSON.parse(fs.readFileSync(path.join(dir, '.ade', 'state.json'), 'utf8'));
+  return JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'state.json'), 'utf8'));
 }
 
-test('ade pr pushes the branch, opens a PR from the plan, tells the tracker, follows the merge', async () => {
+test('unslopped pr pushes the branch, opens a PR from the plan, tells the tracker, follows the merge', async () => {
   const gh = await fakeGithub();
   try {
     const dir = tmpDir();
@@ -71,10 +71,10 @@ test('ade pr pushes the branch, opens a PR from the plan, tells the tracker, fol
     git(origin, 'init', '-q', '--bare');
     git(dir, 'remote', 'add', 'origin', origin);
     writeConfig(dir, { test: PASS }, { practices: { ...PRACTICES_OFF, protectedBranches: ['main', 'master'] }, tracker: { provider: 'webhook', github: { repo: 'acme/app' }, transitions: { done: 'Done' } } });
-    fs.writeFileSync(path.join(dir, '.gitignore'), '.ade/state.json\n.ade/cycles/\n');
+    fs.writeFileSync(path.join(dir, '.gitignore'), '.unslopped/state.json\n.unslopped/cycles/\n');
     git(dir, 'add', '.');
     git(dir, 'commit', '-q', '-m', 'chore: config');
-    const env = { GITHUB_TOKEN: 'tok', ADE_GITHUB_API: gh.base, ADE_WEBHOOK_URL: `${gh.base}/hook` };
+    const env = { GITHUB_TOKEN: 'tok', UNSLOPPED_GITHUB_API: gh.base, UNSLOPPED_WEBHOOK_URL: `${gh.base}/hook` };
 
     let r = await cli(dir, env, ['start', 'Ship it ABC-1']);
     assert.equal(r.code, 2);
@@ -86,7 +86,7 @@ test('ade pr pushes the branch, opens a PR from the plan, tells the tracker, fol
     r = await cli(dir, env, ['start', 'Ship it ABC-1']);
     assert.equal(r.code, 0, r.out);
     const id = r.out.match(/started cycle (\S+)/)![1];
-    const plan = path.join(dir, '.ade', 'plans', `${id}.md`);
+    const plan = path.join(dir, '.unslopped', 'plans', `${id}.md`);
     fs.writeFileSync(plan, fs.readFileSync(plan, 'utf8').replace('## Goal\n', '## Goal\nShip the thing\n').replace('- [ ]', '- [x] it ships'));
     fs.writeFileSync(path.join(dir, 'a.js'), '1\n2\n3\n');
     git(dir, 'add', '.');
@@ -134,13 +134,13 @@ test('ade pr pushes the branch, opens a PR from the plan, tells the tracker, fol
   }
 });
 
-test('ade review --pr posts inline, summary comments, fails on critical findings', async () => {
+test('unslopped review --pr posts inline, summary comments, fails on critical findings', async () => {
   const gh = await fakeGithub();
   try {
     const dir = tmpDir();
     initRepo(dir);
     writeConfig(dir, { test: PASS }, { tracker: { provider: null, github: { repo: 'acme/app' } } });
-    const env = { GITHUB_TOKEN: 'tok', ADE_GITHUB_API: gh.base };
+    const env = { GITHUB_TOKEN: 'tok', UNSLOPPED_GITHUB_API: gh.base };
 
     fs.writeFileSync(path.join(dir, 'r.md'), '- [critical] off by one in a.js:2\n- [major] missing test for a.js:50\n- [minor] naming\n');
     let r = await cli(dir, env, ['review', '--pr=7', '--file=r.md']);
@@ -155,24 +155,24 @@ test('ade review --pr posts inline, summary comments, fails on critical findings
     assert.match(posted.body.body, /- \[major\] missing test for a\.js:50/);
     assert.match(posted.body.body, /## Impact\n1 file\(s\) changed, 0 dependent file\(s\) within 3 hops\./);
     assert.match(r.out, /impact: 0 dependent file\(s\) within 3 hops/);
-    assert.ok(fs.existsSync(path.join(dir, '.ade', 'reviews', 'pr-7.md')));
-    assert.ok(fs.existsSync(path.join(dir, '.ade', 'reviews', 'pr-7.diff')));
+    assert.ok(fs.existsSync(path.join(dir, '.unslopped', 'reviews', 'pr-7.md')));
+    assert.ok(fs.existsSync(path.join(dir, '.unslopped', 'reviews', 'pr-7.diff')));
 
     r = await cli(dir, env, ['review', '--pr=7', '--approve'], '- [minor] naming\n');
     assert.equal(r.code, 0, r.out);
     assert.match(r.out, /posted APPROVE review with 0 inline comment\(s\)/);
 
-    const cfgFile = path.join(dir, 'ade.config.json');
+    const cfgFile = path.join(dir, 'unslopped.config.json');
     const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
-    cfg.practices.reviewCommand = 'node -e "console.log(\'- [major] \' + process.env.ADE_PR_NUMBER + \' \' + require(\'fs\').existsSync(process.env.ADE_PR_DIFF_FILE))"';
+    cfg.practices.reviewCommand = 'node -e "console.log(\'- [major] \' + process.env.UNSLOPPED_PR_NUMBER + \' \' + require(\'fs\').existsSync(process.env.UNSLOPPED_PR_DIFF_FILE))"';
     fs.writeFileSync(cfgFile, JSON.stringify(cfg));
     r = await cli(dir, env, ['review', '--pr=7', '--no-post']);
     assert.equal(r.code, 0, r.out);
     assert.match(r.out, /findings: 0 critical, 1 major, 0 minor \(from command\)/);
-    assert.match(fs.readFileSync(path.join(dir, '.ade', 'reviews', 'pr-7.md'), 'utf8'), /\[major\] 7 true/);
+    assert.match(fs.readFileSync(path.join(dir, '.unslopped', 'reviews', 'pr-7.md'), 'utf8'), /\[major\] 7 true/);
     assert.equal(gh.calls.filter((c) => c.url === '/repos/acme/app/pulls/7/reviews').length, 2);
 
-    r = await cli(dir, { ADE_GITHUB_API: gh.base, GITHUB_TOKEN: '' }, ['review', '--pr=7', '--file=r.md']);
+    r = await cli(dir, { UNSLOPPED_GITHUB_API: gh.base, GITHUB_TOKEN: '' }, ['review', '--pr=7', '--file=r.md']);
     assert.equal(r.code, 2);
     assert.match(r.out, /no GitHub token/);
     assert.equal((await cli(dir, env, ['review', '--pr=zero'])).code, 2);
@@ -185,12 +185,12 @@ test('init --ci writes the review workflow once', async () => {
   const dir = tmpDir();
   let r = await cli(dir, {}, ['init', '--only=agents', '--ci']);
   assert.equal(r.code, 0, r.out);
-  assert.match(r.out, /wrote \.github[\\/]workflows[\\/]ade-review\.yml/);
-  const file = path.join(dir, '.github', 'workflows', 'ade-review.yml');
+  assert.match(r.out, /wrote \.github[\\/]workflows[\\/]unslopped-review\.yml/);
+  const file = path.join(dir, '.github', 'workflows', 'unslopped-review.yml');
   const text = fs.readFileSync(file, 'utf8');
   assert.match(text, /on:\n  pull_request:/);
   assert.match(text, /pull-requests: write/);
-  assert.match(text, /npx -y awesome-delivery-engine review --pr=\$\{\{ github\.event\.pull_request\.number \}\}/);
+  assert.match(text, /npx -y unslopped review --pr=\$\{\{ github\.event\.pull_request\.number \}\}/);
   assert.match(r.out, /wrote \.github[\\/]pull_request_template\.md/);
   const template = fs.readFileSync(path.join(dir, '.github', 'pull_request_template.md'), 'utf8');
   assert.match(template, /## Why\n[\s\S]*## What changed\n[\s\S]*## Review focus/);
@@ -200,5 +200,5 @@ test('init --ci writes the review workflow once', async () => {
   r = await cli(dir, {}, ['init', '--only=agents', '--ci']);
   assert.equal(fs.readFileSync(file, 'utf8'), 'custom\n');
   assert.equal(fs.readFileSync(path.join(dir, '.github', 'pull_request_template.md'), 'utf8'), 'mine\n');
-  assert.doesNotMatch(r.out, /ade-review\.yml|pull_request_template/);
+  assert.doesNotMatch(r.out, /unslopped-review\.yml|pull_request_template/);
 });

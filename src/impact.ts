@@ -43,7 +43,7 @@ export function localChanges(root: string, since: string | null): ChangedLines {
   const out: ChangedLines = new Map();
   for (const f of changedFiles(root, since)) out.set(f, []);
   for (const l of addedLines(root, since)) {
-    if (l.file.startsWith('.ade/')) continue;
+    if (l.file.startsWith('.unslopped/')) continue;
     if (!out.has(l.file)) out.set(l.file, []);
     out.get(l.file)!.push(l.line);
   }

@@ -14,14 +14,14 @@ test('full cycle through the CLI with gates blocking bad moves', () => {
 
   let r = cli(dir, 'status');
   assert.equal(r.code, 2);
-  assert.match(r.out, /ade init/);
+  assert.match(r.out, /unslopped init/);
 
   r = cli(dir, 'init', '--only=agents');
   assert.equal(r.code, 0);
-  assert.match(r.out, /wrote ade.config.json/);
+  assert.match(r.out, /wrote unslopped.config.json/);
   assert.match(r.out, /practices: plan sections Goal\/Approach\/Files to touch, scope on, test evidence on/);
   git(dir, 'add', '.');
-  git(dir, 'commit', '-q', '-m', 'ade');
+  git(dir, 'commit', '-q', '-m', 'unslopped');
 
   r = cli(dir, 'next');
   assert.equal(r.code, 2);
@@ -35,7 +35,7 @@ test('full cycle through the CLI with gates blocking bad moves', () => {
   r = cli(dir, 'start', 'Add', 'health', 'endpoint');
   assert.equal(r.code, 0);
   const id = r.out.match(/started cycle (\S+)/)[1];
-  const plan = path.join(dir, '.ade', 'plans', `${id}.md`);
+  const plan = path.join(dir, '.unslopped', 'plans', `${id}.md`);
   assert.ok(fs.existsSync(plan));
   assert.match(fs.readFileSync(plan, 'utf8'), /# Add health endpoint/);
 
@@ -93,7 +93,7 @@ test('full cycle through the CLI with gates blocking bad moves', () => {
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /ok   red before green/);
 
-  const cfgFile = path.join(dir, 'ade.config.json');
+  const cfgFile = path.join(dir, 'unslopped.config.json');
   const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
   fs.writeFileSync(cfgFile, JSON.stringify({ ...cfg, commands: { ...cfg.commands, test: 'true' } }, null, 2));
   r = cli(dir, 'next');
@@ -151,7 +151,7 @@ test('full cycle through the CLI with gates blocking bad moves', () => {
   r = cli(dir, 'next');
   assert.equal(r.code, 0);
   assert.match(r.out, /complete/);
-  assert.ok(fs.existsSync(path.join(dir, '.ade', 'cycles', `${id}.json`)));
+  assert.ok(fs.existsSync(path.join(dir, '.unslopped', 'cycles', `${id}.json`)));
   r = cli(dir, 'status');
   assert.match(r.out, /no active cycle/);
 
@@ -173,9 +173,9 @@ test('failing test command blocks with its output, reset archives the cycle', ()
   let r = cli(dir, 'start', 'x');
   assert.equal(r.code, 0);
   const id = r.out.match(/started cycle (\S+)/)[1];
-  const state = JSON.parse(fs.readFileSync(path.join(dir, '.ade', 'state.json'), 'utf8'));
+  const state = JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'state.json'), 'utf8'));
   state.cycle.phase = 'test';
-  fs.writeFileSync(path.join(dir, '.ade', 'state.json'), JSON.stringify(state));
+  fs.writeFileSync(path.join(dir, '.unslopped', 'state.json'), JSON.stringify(state));
   r = cli(dir, 'next');
   assert.equal(r.code, 1);
   assert.match(r.out, /boom/);
@@ -187,7 +187,7 @@ test('failing test command blocks with its output, reset archives the cycle', ()
   assert.match(cli(dir, 'tokens', '--json').out, /"count": 1/);
   r = cli(dir, 'reset');
   assert.equal(r.code, 0);
-  const archived = JSON.parse(fs.readFileSync(path.join(dir, '.ade', 'cycles', `${id}.json`), 'utf8'));
+  const archived = JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'cycles', `${id}.json`), 'utf8'));
   assert.equal(archived.status, 'abandoned');
   assert.equal(archived.history.length, 1);
 });

@@ -9,7 +9,7 @@ export interface GithubClient {
 }
 
 export function githubApiBase(env: Env): string {
-  return (env.ADE_GITHUB_API ?? 'https://api.github.com').replace(/\/+$/, '');
+  return (env.UNSLOPPED_GITHUB_API ?? 'https://api.github.com').replace(/\/+$/, '');
 }
 
 export function githubClient(repo: string, token: string, env: Env, fetchImpl: FetchLike): GithubClient {
@@ -17,7 +17,7 @@ export function githubClient(repo: string, token: string, env: Env, fetchImpl: F
   const headers = (accept: string): Record<string, string> => ({
     Authorization: `Bearer ${token}`,
     Accept: accept,
-    'User-Agent': 'awesome-delivery-engine',
+    'User-Agent': 'unslopped',
     'X-GitHub-Api-Version': '2022-11-28',
     'Content-Type': 'application/json',
   });
@@ -128,7 +128,7 @@ export function rightSideLines(patch: string | undefined): Set<number> {
   return lines;
 }
 
-export function reviewPayload(findings: Finding[], allowed: Map<string, Set<number>>, { approve = false, header = 'ADE review' } = {}): Omit<ReviewInput, 'commit_id'> {
+export function reviewPayload(findings: Finding[], allowed: Map<string, Set<number>>, { approve = false, header = 'Unslopped review' } = {}): Omit<ReviewInput, 'commit_id'> {
   const comments: ReviewComment[] = [];
   const rest: Finding[] = [];
   for (const f of findings) {
@@ -202,6 +202,6 @@ export function prBody(cycle: Cycle, plan: string, repo: string, reviewFocus: st
   const runs = cycle.history.length;
   const failed = cycle.history.filter((h) => !h.pass).length;
   const review = cycle.review ? `, review: ${cycle.review.critical} critical / ${cycle.review.major} major / ${cycle.review.minor} minor` : '';
-  parts.push(`ADE cycle ${cycle.id}: ${runs} gate run(s), ${failed} failed${review}.`);
+  parts.push(`Unslopped cycle ${cycle.id}: ${runs} gate run(s), ${failed} failed${review}.`);
   return parts.join('\n').trim() + '\n';
 }

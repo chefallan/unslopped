@@ -4,10 +4,10 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-export const BIN = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'ade.js');
+export const BIN = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'unslopped.js');
 
 export function tmpDir(): string {
-  return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ade-')));
+  return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'unslopped-')));
 }
 
 export function git(cwd: string, ...args: string[]): string {
@@ -23,7 +23,7 @@ export function initRepo(cwd: string): void {
   git(cwd, 'commit', '-q', '-m', 'init');
 }
 
-export const NO_TRACKER_ENV = { LINEAR_API_KEY: '', JIRA_API_TOKEN: '', JIRA_BASE_URL: '', GITHUB_TOKEN: '', GH_TOKEN: '', ADE_WEBHOOK_URL: '' };
+export const NO_TRACKER_ENV = { LINEAR_API_KEY: '', JIRA_API_TOKEN: '', JIRA_BASE_URL: '', GITHUB_TOKEN: '', GH_TOKEN: '', UNSLOPPED_WEBHOOK_URL: '' };
 
 export const PRACTICES_OFF = {
   planSections: [] as string[],
@@ -62,7 +62,7 @@ export function cli(cwd: string, ...args: string[]): { code: number | null; out:
 
 export function writeConfig(cwd: string, commands: Record<string, string | null>, extra: Record<string, unknown> = {}): void {
   fs.writeFileSync(
-    path.join(cwd, 'ade.config.json'),
+    path.join(cwd, 'unslopped.config.json'),
     JSON.stringify({ commands, deploy: { requireApproval: true }, assistants: ['agents'], practices: PRACTICES_OFF, ...extra }, null, 2)
   );
 }
