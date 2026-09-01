@@ -11,3 +11,4 @@ copy; fix it before it spreads), soon (costs someone time while it exists), acce
 - [soon] tool hook matches human-only command names inside file content written through shell heredocs (src/hooks.ts) :: logged 2026-08-31, cycle 20260831-08ed52
 - [soon] tool hook blocks shell commands that mention the config file next to any greater-than character, arrows included (src/hooks.ts) :: logged 2026-08-31, cycle 20260831-08ed52
 - [soon] add CHANGELOG.md before first npm publish :: logged 2026-08-31, cycle 20260831-08ed52
+- [pattern] scopeCheck should tolerate a trailing parenthetical note on Files to touch entries (src/practices.ts) :: logged 2026-09-01, cycle 20260831-08ed52
