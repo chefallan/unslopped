@@ -152,7 +152,7 @@ export function impactFindings(impact: Impact): Finding[] {
   for (const h of impact.hot) {
     const file = impact.files.find((f) => f.file === h.file);
     if (file && !file.coveringTests.length && !impact.testsInChange.length) {
-      out.push({ severity: 'major', text: `${h.symbol} in ${h.file} changed and is used by ${h.dependents} file(s), with no test in this change and no test importing the file. add one before merging`, file: h.file });
+      out.push({ severity: 'major', text: `${h.symbol} in ${h.file} changed, ${h.dependents} other file(s) depend on it, and no test checks it. add a test before merging`, file: h.file });
     }
   }
   return out;

@@ -102,7 +102,7 @@ test('changed lines map to enclosing symbols, to dependents, tests, hot exports'
   assert.equal(risky.files[1].inGraph, false);
   const findings = impactFindings(risky);
   assert.equal(findings.length, 1);
-  assert.match(findings[0].text, /solo in src\/lonely\.ts changed and is used by 3 file\(s\), with no test/);
+  assert.match(findings[0].text, /solo in src\/lonely\.ts changed, 3 other file\(s\) depend on it, and no test checks it/);
   assert.equal(findings[0].severity, 'major');
   const section = impactSection(risky);
   assert.match(section, /^## Impact\n2 file\(s\) changed/);

@@ -214,7 +214,7 @@ export async function reviewPullRequest(io: Writer, root: string, config: Config
     }
     const secrets = scanDiffText(diff);
     if (secrets.length) {
-      const auto = secrets.map((h) => `- [critical] possible ${h.name} committed at ${h.file}:${h.line}. remove it, move it to an environment variable, rotate it`).join('\n');
+      const auto = secrets.map((h) => `- [critical] ${h.file}:${h.line} looks like a real ${h.name}: remove it, load it from an environment variable, and rotate the value`).join('\n');
       text = `${auto}\n${text}`;
       out(io, `${secrets.length} credential-looking line(s) in the PR diff added as critical findings`);
     }

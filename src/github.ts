@@ -128,21 +128,36 @@ export function rightSideLines(patch: string | undefined): Set<number> {
   return lines;
 }
 
+const SEVERITY_LABEL: Record<Finding['severity'], string> = { critical: 'Must fix', major: 'Worth fixing', minor: 'Minor' };
+
+function saidInWords(counts: Record<'critical' | 'major' | 'minor', number>): string {
+  const parts: string[] = [];
+  if (counts.critical) parts.push(`${counts.critical} must be fixed before merge`);
+  if (counts.major) parts.push(`${counts.major} worth fixing`);
+  if (counts.minor) parts.push(`${counts.minor} small note${counts.minor > 1 ? 's' : ''}`);
+  return parts.join(', ') + '.';
+}
+
 export function reviewPayload(findings: Finding[], allowed: Map<string, Set<number>>, { approve = false, header = 'Unslopped review' } = {}): Omit<ReviewInput, 'commit_id'> {
   const comments: ReviewComment[] = [];
   const rest: Finding[] = [];
   for (const f of findings) {
-    if (f.file && f.line && allowed.get(f.file)?.has(f.line)) comments.push({ path: f.file, line: f.line, side: 'RIGHT', body: `**${f.severity}**: ${f.text}` });
+    if (f.file && f.line && allowed.get(f.file)?.has(f.line)) comments.push({ path: f.file, line: f.line, side: 'RIGHT', body: `**${SEVERITY_LABEL[f.severity]}**: ${f.text}` });
     else rest.push(f);
   }
   const counts = { critical: 0, major: 0, minor: 0 };
   for (const f of findings) counts[f.severity]++;
-  const lines = [header, '', `${counts.critical} critical, ${counts.major} major, ${counts.minor} minor. ${comments.length} placed inline.`];
+  const lines = [header, ''];
+  if (!findings.length) {
+    lines.push('Nothing to flag. Looks good.');
+  } else {
+    lines.push(saidInWords(counts));
+    if (comments.length) lines.push(comments.length === 1 ? 'The comment sits on the line it talks about.' : `${comments.length} comments sit on the lines they talk about.`);
+  }
   if (rest.length) {
     lines.push('');
-    for (const f of rest) lines.push(`- [${f.severity}] ${f.text}`);
+    for (const f of rest) lines.push(`- ${SEVERITY_LABEL[f.severity]}: ${f.text}`);
   }
-  if (!findings.length) lines.push('', 'No findings.');
   const event: ReviewInput['event'] = counts.critical ? 'REQUEST_CHANGES' : approve && !counts.major ? 'APPROVE' : 'COMMENT';
   return { body: lines.join('\n'), event, comments };
 }

@@ -29,14 +29,16 @@ test('reviewPayload places findings inline when the line is in the diff, picks t
   const p = reviewPayload(findings, allowed, { header: 'R' });
   assert.equal(p.event, 'REQUEST_CHANGES');
   assert.equal(p.comments.length, 1);
-  assert.deepEqual(p.comments[0], { path: 'src/db.js', line: 12, side: 'RIGHT', body: '**critical**: concat in src/db.js:12' });
-  assert.match(p.body, /1 critical, 1 major, 1 minor\. 1 placed inline/);
-  assert.match(p.body, /- \[major\] slow query/);
-  assert.match(p.body, /- \[minor\] typo/);
+  assert.deepEqual(p.comments[0], { path: 'src/db.js', line: 12, side: 'RIGHT', body: '**Must fix**: concat in src/db.js:12' });
+  assert.match(p.body, /1 must be fixed before merge, 1 worth fixing, 1 small note\./);
+  assert.match(p.body, /The comment sits on the line it talks about\./);
+  assert.match(p.body, /- Worth fixing: slow query/);
+  assert.match(p.body, /- Minor: typo/);
+  assert.doesNotMatch(p.body, /placed inline|\[major\]|\[minor\]/);
   assert.equal(reviewPayload(parseFindings('- [minor] x'), allowed, { approve: true }).event, 'APPROVE');
   assert.equal(reviewPayload(parseFindings('- [major] x'), allowed, { approve: true }).event, 'COMMENT');
   assert.equal(reviewPayload([], allowed).event, 'COMMENT');
-  assert.match(reviewPayload([], allowed).body, /No findings/);
+  assert.match(reviewPayload([], allowed).body, /Nothing to flag\. Looks good\./);
 });
 
 test('PR title, body come from the cycle, the plan', () => {

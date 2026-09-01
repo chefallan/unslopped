@@ -151,8 +151,8 @@ test('unslopped review --pr posts inline, summary comments, fails on critical fi
     const posted = gh.calls.find((c) => c.url === '/repos/acme/app/pulls/7/reviews')!;
     assert.equal(posted.body.event, 'REQUEST_CHANGES');
     assert.equal(posted.body.commit_id, 'abcdef1234567890');
-    assert.deepEqual(posted.body.comments, [{ path: 'a.js', line: 2, side: 'RIGHT', body: '**critical**: off by one in a.js:2' }]);
-    assert.match(posted.body.body, /- \[major\] missing test for a\.js:50/);
+    assert.deepEqual(posted.body.comments, [{ path: 'a.js', line: 2, side: 'RIGHT', body: '**Must fix**: off by one in a.js:2' }]);
+    assert.match(posted.body.body, /- Worth fixing: missing test for a\.js:50/);
     assert.match(posted.body.body, /## Impact\n1 file\(s\) changed, 0 dependent file\(s\) within 3 hops\./);
     assert.match(r.out, /impact: 0 dependent file\(s\) within 3 hops/);
     assert.ok(fs.existsSync(path.join(dir, '.unslopped', 'reviews', 'pr-7.md')));
