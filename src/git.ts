@@ -83,6 +83,13 @@ export function pushBranch(cwd: string, branch: string): GitResult {
   return git(['push', '--set-upstream', 'origin', branch], cwd);
 }
 
+export function commitMeta(cwd: string, since: string): { identities: string[]; bodyLines: string[] } {
+  const range = since + '..HEAD';
+  const split = (r: GitResult): string[] => (r.ok ? r.out.split(/\r?\n/).filter(Boolean) : []);
+  const ids = git(['log', range, '--format=%an <%ae>%n%cn <%ce>'], cwd);
+  const bodies = git(['log', range, '--format=%B'], cwd);
+  return { identities: split(ids), bodyLines: split(bodies) };
+}
 export function commitSubjects(sha: string | null, cwd: string): string[] {
   const range = sha ? `${sha}..HEAD` : 'HEAD';
   const r = git(['log', range, '--format=%s'], cwd);

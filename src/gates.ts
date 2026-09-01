@@ -4,7 +4,7 @@ import { runCommand, tail } from './run.ts';
 import { isRepo, porcelain, commitsSince, lastCommitMs } from './git.ts';
 import { planPath, stateDir, STATE_DIR } from './state.ts';
 import { digest, account } from './tokens.ts';
-import { changelogCheck, commitFormatCheck, coverageCheck, criteriaCheckedCheck, criteriaItems, criteriaVagueCheck, declarationsCheck, diffSizeCheck, exclusiveCheck, handoffCheck, monitorNotesCheck, negativeCriterionCheck, openQuestionsCheck, planSectionsCheck, redCheck, redactSecrets, reviewApprovalCheck, reviewArtifactCheck, rollbackCheck, scopeCheck, secretScanCheck, styleCheck, testDeletionCheck, testEvidenceCheck } from './practices.ts';
+import { authorshipCheck, changelogCheck, commitFormatCheck, coverageCheck, criteriaCheckedCheck, criteriaItems, criteriaVagueCheck, declarationsCheck, diffSizeCheck, exclusiveCheck, handoffCheck, monitorNotesCheck, negativeCriterionCheck, openQuestionsCheck, planSectionsCheck, redCheck, redactSecrets, reviewApprovalCheck, reviewArtifactCheck, rollbackCheck, scopeCheck, secretScanCheck, styleCheck, testDeletionCheck, testEvidenceCheck } from './practices.ts';
 import type { Check, Config, GateContext, GateResult, Phase } from './types.ts';
 
 function check(name: string, ok: boolean, detail = ''): Check {
@@ -125,6 +125,7 @@ function releaseGate(ctx: GateContext): Check[] {
     exclusiveCheck(ctx),
     testDeletionCheck(ctx, plan),
     commits > 0 ? commitFormatCheck(ctx) : null,
+    commits > 0 ? authorshipCheck(ctx) : null,
     changelogCheck(ctx),
     secretScanCheck(ctx),
     styleCheck(ctx),
@@ -184,7 +185,7 @@ export function describeGate(phase: Phase, config: Config): string {
     case 'test':
       return `test: ${cmd('test')}${p.tdd ? ', a red run recorded for the changed tests' : ''}${p.coverage ? `, coverage >= ${p.coverage.min}%` : ''}`;
     case 'release':
-      return `clean tree, new commits${p.criteriaChecked ? ', criteria ticked' : ''}${p.commitPattern ? ', commit format' : ''}${p.changelog ? ', changelog updated if present' : ''}${p.secretScan ? ', no secrets' : ''}${p.reviewArtifact ? ', review with no critical findings' : ''}${p.reviewApproval ? ', review approval' : ''}, release: ${cmd('release')}`;
+      return `clean tree, new commits${p.criteriaChecked ? ', criteria ticked' : ''}${p.commitPattern ? ', commit format' : ''}${p.humanAuthorship ? ', authors are humans' : ''}${p.changelog ? ', changelog updated if present' : ''}${p.secretScan ? ', no secrets' : ''}${p.reviewArtifact ? ', review with no critical findings' : ''}${p.reviewApproval ? ', review approval' : ''}, release: ${cmd('release')}`;
     case 'deploy':
       return `${config.deploy.requireApproval ? 'human approval, ' : ''}${p.rollback && c.deploy ? 'rollback configured, ' : ''}deploy: ${cmd('deploy')}`;
     case 'operate':

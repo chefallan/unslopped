@@ -52,6 +52,7 @@ export interface Practices {
   criteriaChecked: boolean;
   commitPattern: string | null;
   commitScopes: string[] | null;
+  humanAuthorship: boolean;
   protectedBranches: string[];
   maxDiffLines: number;
   secretScan: boolean;

@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { addedLines, changedFiles, commitSubjects, diffLines, numstatSince, parseUnifiedDiff } from './git.ts';
+import { addedLines, changedFiles, commitMeta, commitSubjects, diffLines, numstatSince, parseUnifiedDiff } from './git.ts';
 import { planPath } from './state.ts';
 import { tokenize } from './search.ts';
 import type { Check, Cycle, Finding, GateContext, Practices } from './types.ts';
@@ -43,6 +43,7 @@ export function practiceDefaults(): Practices {
     criteriaChecked: true,
     commitPattern: DEFAULT_COMMIT_PATTERN,
     commitScopes: null,
+    humanAuthorship: true,
     protectedBranches: ['main', 'master'],
     maxDiffLines: 400,
     secretScan: true,
@@ -349,6 +350,24 @@ export function criteriaCheckedCheck(ctx: GateContext): Check | null {
   const open = items.filter((c) => !c.checked);
   if (!open.length) return check('criteria verified', true, `${items.length} criterion(s) ticked`);
   return check('criteria verified', false, `${open.length} acceptance criterion(s) not ticked [x] in the plan. verify each one, then tick it:\n${open.map((c) => `- ${c.text}`).join('\n')}`);
+}
+
+export const ASSISTANT_ID = /\b(claude|anthropic|chatgpt|gpt|openai|copilot|gemini|codex|cursor|aider|devin|windsurf|cline|roo|kilo|goose|opencode|coding assistant)\b/i;
+const CO_AUTHOR_LINE = /^\s*co-authored-by:/i;
+const BADGE_LINE = /\bgenerated (with|by)\b/i;
+
+export function authorshipCheck(ctx: GateContext): Check | null {
+  if (!ctx.config.practices.humanAuthorship) return null;
+  if (!ctx.cycle.startCommit) return check('authorship', true, 'no start commit recorded, nothing to scan');
+  const meta = commitMeta(ctx.root, ctx.cycle.startCommit);
+  const problems: string[] = [];
+  for (const id of new Set(meta.identities)) if (ASSISTANT_ID.test(id)) problems.push(`commit identity looks like an assistant: ${id}`);
+  for (const line of meta.bodyLines) {
+    if (CO_AUTHOR_LINE.test(line) && ASSISTANT_ID.test(line)) problems.push(`assistant co-author trailer: ${line.trim()}`);
+    else if (BADGE_LINE.test(line) && ASSISTANT_ID.test(line)) problems.push(`attribution badge: ${line.trim()}`);
+  }
+  if (!problems.length) return check('authorship', true, 'every commit is authored by the human');
+  return check('authorship', false, `the human is the only author here. amend these before release:\n${[...new Set(problems)].slice(0, 6).join('\n')}`);
 }
 
 export function commitFormatCheck(ctx: GateContext): Check | null {

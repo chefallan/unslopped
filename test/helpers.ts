@@ -46,6 +46,7 @@ export const PRACTICES_OFF = {
   testEvidence: false,
   criteriaChecked: false,
   commitPattern: null,
+  humanAuthorship: false,
   protectedBranches: [] as string[],
   maxDiffLines: 0,
   secretScan: false,

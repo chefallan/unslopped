@@ -136,6 +136,7 @@ Each practice is a mechanical check, on by default unless noted, switchable unde
 | Secrets | added lines are scanned for AWS, GitHub, GitLab, npm, PyPI, Slack, Stripe, SendGrid, Twilio, Telegram, Google, GCP, Azure, OpenAI, Anthropic and Linear credentials, private keys, JWTs, bearer tokens, connection strings, committed env files and high-entropy assignments; the same patterns redact tokens from every log the engine writes, refuse credentials in the config, and become critical findings in PR reviews |
 | Style | no em or en dashes in added lines, no filler words in comments and prose, comment-heavy diffs fail, no issue ids in comments, one outcome per test name |
 | Commit format | Conventional Commits, subjects under 72 characters, optional scope validation |
+| Human authorship | the release gate fails when a commit since cycle start carries an assistant author, an assistant co-author trailer or a generated-with badge, and the tool hook denies such a commit before it runs; human co-authors pass (`practices.humanAuthorship`) |
 | Guarded paths | auth, security, permissions, migrations, payments, billing and ledger paths force a human review approval and a rejection criterion, whatever the diff size |
 | Exclusive paths | a change to a shared boundary ships in its own cycle (off by default) |
 | Changelog and declarations | a changelog present in the repo must change; configured declarations (`Indexes: none`) are demanded when matching paths change |

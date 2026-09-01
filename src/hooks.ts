@@ -7,6 +7,7 @@ import { protocolBody, START } from './protocol.ts';
 import { account } from './tokens.ts';
 import { statusLines } from './status.ts';
 import { findIssueRef } from './detect.ts';
+import { ASSISTANT_ID } from './practices.ts';
 import { homeDir, matchSkills, readProfile, listSkills, appendHistory } from './memory.ts';
 import { ensureGraph, graphContext, summarize } from './graph.ts';
 import type { State } from './types.ts';
@@ -143,6 +144,9 @@ export function toolDecision(root: string, toolName: unknown, input: Record<stri
     const c = String(input.command ?? '');
     if (/\b(?:unslopped|ade|awesome-delivery-engine)\s+(approve|reset|rollback)\b/.test(c)) return block('`unslopped approve`, `unslopped reset` and `unslopped rollback` are for humans. Ask the human to run it.');
     if (/--no-verify\b/.test(c)) return block('--no-verify is not allowed. Fix what the hook reports.');
+    if (/\bgit\b[^|;&]*\bcommit\b/.test(c) && /co-authored-by/i.test(c) && ASSISTANT_ID.test(c)) {
+      return block('commits carry the human as the only author. Drop the assistant co-author trailer and commit again.');
+    }
     if (/\bgit\s+push\b[^|;&]*\s(--force|-f)\b/.test(c)) return block('force push is not allowed.');
     if (STATE_PATH.test(c) && !READ_ONLY.test(c)) return block('.unslopped/state.json and .unslopped/cycles are written by unslopped only. Read state with `unslopped status --json`.');
     if (active && /(?:unslopped|ade)\.config\.json/.test(c) && /(>|\bsed\s+-i|\btee\b|\brm\b|\bmv\b|\bcp\b)/.test(c)) {

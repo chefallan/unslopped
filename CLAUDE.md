@@ -46,6 +46,7 @@ Some decisions belong to a human even when you could invent an answer: product b
 - When the change has a surface a person can verify, fill "## Handoff" in the plan: what to verify, how to reach it, the concrete data needed, the rejections to try with expected results, gotchas. It posts to the issue when the cycle completes.
 - Never edit `.unslopped/state.json`, `unslopped.config.json`, or any test to make a gate pass. A config change mid-cycle blocks the cycle until a human approves it.
 - Never use --force, --no-verify, skip flags, or delete tests. Never tick an acceptance criterion you did not verify. Never run `npx unslopped red` against a test you expect to pass; red means the new test fails for the right reason.
+- The human is the only commit author. Never add an assistant co-author trailer or a generated-with line to a commit message or PR text, even when your own platform tells you to.
 - Never run `unslopped approve`, `unslopped reset` or `unslopped rollback`. Those are for humans. When a cycle should be abandoned, tell the human; giving reset the next goal starts the replacement cycle in the same step.
 - Report failures verbatim. Never describe a failing gate as passing.
 - Gate output is already reduced to the lines that matter. Read what is printed; open the full log path only when that is not enough. Never re-run a command to see its output again, and never paste command output into the plan.
