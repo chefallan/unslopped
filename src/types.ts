@@ -60,6 +60,7 @@ export interface Practices {
   audit: string | null;
   rollback: boolean;
   reviewApproval: boolean;
+  messageApproval: boolean;
   monitorNotes: boolean;
 }
 
@@ -153,7 +154,7 @@ export interface Cycle {
   startCommit: string | null;
   configHash: string;
   issue: Issue | null;
-  approvals: Record<string, { at: string }>;
+  approvals: Record<string, { at: string; hash?: string }>;
   history: HistoryEntry[];
   usedSkills?: string[];
   tokens?: Record<string, TokenBucket>;

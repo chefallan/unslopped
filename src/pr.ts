@@ -8,7 +8,8 @@ import { matchesAny, parseFindings, planSection, scanDiffText } from './practice
 import { ensureGraph } from './graph.ts';
 import { changedLinesFromPatches, computeImpact, impactFindings, impactSection, localChanges } from './impact.ts';
 import { runCommand } from './run.ts';
-import { loadState, planPath, saveState, stateDir } from './state.ts';
+import { loadState, planPath, proposalPath, saveState, stateDir } from './state.ts';
+import { textHash } from './config.ts';
 import { createTracker, mergeTracker } from './tracker.ts';
 import { digest } from './tokens.ts';
 import { readStdinText } from './hooks.ts';
@@ -108,6 +109,19 @@ export async function openPullRequest(io: Writer, root: string, config: Config, 
 
     const area = mostCommon([...changed.keys()].filter((f) => f.includes('/')).map((f) => f.split('/')[0]));
     const title = prTitle(cycle, { conventional: Boolean(config.practices.commitPattern), subjects: commitSubjects(cycle.startCommit, root).filter((s) => !/^Merge /.test(s)), area });
+    if (config.practices.messageApproval && !existing) {
+      const file = proposalPath(root, 'pr');
+      const proposed = `${title}\n\n${body}`;
+      const a = cycle.approvals?.pr;
+      if (!a || a.hash !== textHash(proposed)) {
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, proposed.endsWith('\n') ? proposed : proposed + '\n');
+        out(io, `pull request text written to ${path.relative(root, file).replace(/\\/g, '/')}`);
+        out(io, 'waiting for the human to review it and run: unslopped approve pr, then run unslopped pr again');
+        return 1;
+      }
+      delete cycle.approvals.pr;
+    }
     const pr = existing ?? (await createPr(gh, { head: branch, base, title, body, draft: draft ?? config.practices.pullRequest.draft }));
     cycle.pr = { number: pr.number, url: pr.html_url, head: branch, base: pr.base?.ref ?? base, at: new Date().toISOString(), merged: Boolean(pr.merged), mergedAt: pr.merged_at ?? null };
     saveState(root, state);

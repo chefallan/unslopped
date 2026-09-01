@@ -202,3 +202,40 @@ test('init --ci writes the review workflow once', async () => {
   assert.equal(fs.readFileSync(path.join(dir, '.github', 'pull_request_template.md'), 'utf8'), 'mine\n');
   assert.doesNotMatch(r.out, /unslopped-review\.yml|pull_request_template/);
 });
+
+test('pr waits for human approval of its text when messageApproval is on', async () => {
+  const gh = await fakeGithub();
+  try {
+    const dir = tmpDir();
+    initRepo(dir);
+    const origin = tmpDir();
+    git(origin, 'init', '-q', '--bare');
+    git(dir, 'remote', 'add', 'origin', origin);
+    writeConfig(dir, { test: PASS }, { practices: { ...PRACTICES_OFF, messageApproval: true }, tracker: { github: { repo: 'acme/app' } } });
+    git(dir, 'add', '.');
+    git(dir, 'commit', '-q', '-m', 'chore: config');
+    const env = { GITHUB_TOKEN: 'tok', UNSLOPPED_GITHUB_API: gh.base };
+    git(dir, 'checkout', '-q', '-b', 'feat');
+    let r = await cli(dir, env, ['start', 'Ship quietly']);
+    assert.equal(r.code, 0, r.out);
+    fs.writeFileSync(path.join(dir, 'a.js'), '1\n');
+    git(dir, 'add', '.');
+    git(dir, 'commit', '-q', '-m', 'feat: ship');
+
+    r = await cli(dir, env, ['pr']);
+    assert.equal(r.code, 1, r.out);
+    assert.match(r.out, /approve pr/);
+    const proposal = fs.readFileSync(path.join(dir, '.unslopped', 'proposals', 'pr.md'), 'utf8');
+    assert.match(proposal, /^Ship quietly\n/);
+    assert.ok(!gh.calls.some((c) => c.method === 'POST' && c.url === '/repos/acme/app/pulls'));
+
+    r = await cli(dir, env, ['approve', 'pr']);
+    assert.equal(r.code, 0, r.out);
+    r = await cli(dir, env, ['pr']);
+    assert.equal(r.code, 0, r.out);
+    const created = gh.calls.find((c) => c.method === 'POST' && c.url === '/repos/acme/app/pulls')!;
+    assert.equal(created.body.title, 'Ship quietly');
+  } finally {
+    gh.server.close();
+  }
+});

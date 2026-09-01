@@ -67,9 +67,11 @@ unslopped reset ["<goal>"]               abandon the cycle (humans only); with a
 Humans in the loop:
 
 ```
-unslopped approve deploy|config|review
+unslopped approve deploy|config|review|commit|pr
 unslopped rollback                       run commands.rollback (humans only)
 ```
+
+Words need approval too, when `practices.messageApproval` is on (the default): the assistant writes the commit message with `unslopped propose commit`, the human reads it and runs `unslopped approve commit`, and `unslopped commit` executes exactly the approved text, hash-checked. `unslopped pr` writes its title and body to `.unslopped/proposals/pr.md` and refuses to post until `unslopped approve pr`; any new commit invalidates the approval by itself. The tool hook denies a raw assistant `git commit` while this is on.
 
 Reviews and pull requests:
 
@@ -137,6 +139,7 @@ Each practice is a mechanical check, on by default unless noted, switchable unde
 | Style | no em or en dashes in added lines, no filler words in comments and prose, comment-heavy diffs fail, no issue ids in comments, one outcome per test name |
 | Commit format | Conventional Commits, subjects under 72 characters, optional scope validation |
 | Human authorship | the release gate fails when a commit since cycle start carries an assistant author, an assistant co-author trailer or a generated-with badge, and the tool hook denies such a commit before it runs; human co-authors pass (`practices.humanAuthorship`) |
+| Message approval | no assistant-written commit message or PR text executes unread: propose, human approve, then execute exactly the approved text (`practices.messageApproval`) |
 | Guarded paths | auth, security, permissions, migrations, payments, billing and ledger paths force a human review approval and a rejection criterion, whatever the diff size |
 | Exclusive paths | a change to a shared boundary ships in its own cycle (off by default) |
 | Changelog and declarations | a changelog present in the repo must change; configured declarations (`Indexes: none`) are demanded when matching paths change |

@@ -22,6 +22,10 @@ export function planPath(root: string, id: string): string {
   return path.join(plansDir(root), `${id}.md`);
 }
 
+export function proposalPath(root: string, kind: 'commit' | 'pr'): string {
+  return path.join(stateDir(root), 'proposals', `${kind}.md`);
+}
+
 export function loadState(root: string): State {
   try {
     return JSON.parse(fs.readFileSync(statePath(root), 'utf8')) as State;

@@ -51,6 +51,7 @@ export function practiceDefaults(): Practices {
     audit: null,
     rollback: true,
     reviewApproval: false,
+    messageApproval: true,
     monitorNotes: true,
   };
 }

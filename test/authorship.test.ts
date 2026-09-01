@@ -63,7 +63,7 @@ test('humanAuthorship off skips the check', () => {
 function activeProject(): string {
   const dir = tmpDir();
   initRepo(dir);
-  fs.writeFileSync(path.join(dir, 'unslopped.config.json'), '{}\n');
+  fs.writeFileSync(path.join(dir, 'unslopped.config.json'), '{ "practices": { "messageApproval": false } }\n');
   fs.mkdirSync(path.join(dir, '.unslopped'), { recursive: true });
   fs.writeFileSync(path.join(dir, '.unslopped', 'state.json'), JSON.stringify({ cycle: { id: 'x', phase: 'code' } }) + '\n');
   return dir;

@@ -15,7 +15,9 @@ export function nextSteps(phase: Phase, config: Config, cycle: Cycle, cmd = 'uns
     case 'test':
       return [`${cmd} next (on failure fix the code, not the test)`];
     case 'release': {
-      const steps = ['verify each acceptance criterion, tick it [x] in the plan', 'commit as type(scope): imperative subject'];
+      const steps = ['verify each acceptance criterion, tick it [x] in the plan'];
+      if (p.messageApproval) steps.push(`propose the commit message: ${cmd} propose commit "<type(scope): subject>"`, `ask the human to run: ${cmd} approve commit`, `${cmd} commit`);
+      else steps.push('commit as type(scope): imperative subject');
       if (p.reviewArtifact) steps.push(`get the diff reviewed: ${cmd} review`);
       steps.push(`${cmd} next`);
       return steps;

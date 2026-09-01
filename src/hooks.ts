@@ -147,6 +147,9 @@ export function toolDecision(root: string, toolName: unknown, input: Record<stri
     if (/\bgit\b[^|;&]*\bcommit\b/.test(c) && /co-authored-by/i.test(c) && ASSISTANT_ID.test(c)) {
       return block('commits carry the human as the only author. Drop the assistant co-author trailer and commit again.');
     }
+    if (active && config.practices.messageApproval && /\bgit\b[^|;&]*\bcommit\b/.test(c)) {
+      return block('commit messages need the human to approve them first. Propose with `unslopped propose commit "<type(scope): subject>"`, ask the human to run `unslopped approve commit`, then run `unslopped commit`.');
+    }
     if (/\bgit\s+push\b[^|;&]*\s(--force|-f)\b/.test(c)) return block('force push is not allowed.');
     if (STATE_PATH.test(c) && !READ_ONLY.test(c)) return block('.unslopped/state.json and .unslopped/cycles are written by unslopped only. Read state with `unslopped status --json`.');
     if (active && /(?:unslopped|ade)\.config\.json/.test(c) && /(>|\bsed\s+-i|\btee\b|\brm\b|\bmv\b|\bcp\b)/.test(c)) {

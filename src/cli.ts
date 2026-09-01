@@ -5,8 +5,8 @@ import { PHASES, nextPhase, phaseIndex } from './phases.ts';
 import { statusLines } from './status.ts';
 import { install, uninstall, onPath } from './install.ts';
 import { readStdinJson, readStdinText, sessionContext, promptContext, toolDecision } from './hooks.ts';
-import { loadConfig, saveConfig, configHash, CONFIG_FILE } from './config.ts';
-import { loadState, saveState, newCycle, archiveCycle, archivedCycles, planPath, planTemplate, plansDir, stateDir, STATE_DIR } from './state.ts';
+import { loadConfig, saveConfig, configHash, textHash, CONFIG_FILE } from './config.ts';
+import { loadState, saveState, newCycle, archiveCycle, archivedCycles, planPath, planTemplate, plansDir, proposalPath, stateDir, STATE_DIR } from './state.ts';
 import { resumeLines } from './resume.ts';
 import { runGate, describeGate } from './gates.ts';
 import { init } from './init.ts';
@@ -54,7 +54,10 @@ const HELP = `unslopped <command>
   pr status [--number=<n>]                 show the PR state; on merge tell the tracker and move the issue to done
   tokens [--json]                          token accounting: gate output shown vs raw, hook context, per cycle and total
   metrics [--json]                         lead time, deployment frequency, change failure rate, recovery time, gate first-pass rates
-  approve deploy|config|review             record a human approval
+  approve deploy|config|review|commit|pr   record a human approval
+  propose commit "<subject>" [--file=<body.md>]
+                                           write the commit message for the human to review
+  commit                                   create the commit from the approved proposal
   rollback                                 run commands.rollback (humans only)
   log                                      print gate history for the active cycle
   tracker [--issue=KEY]                    show tracker settings, optionally fetch an issue
@@ -578,14 +581,74 @@ function cmdApprove(io: Writer, root: string, args: string[]): number {
   const config = requireConfig(io, root);
   if (!config) return 2;
   const what = args[0];
-  if (!['deploy', 'config', 'review'].includes(what)) return fail(io, 'usage: unslopped approve deploy|config|review');
+  if (!['deploy', 'config', 'review', 'commit', 'pr'].includes(what)) return fail(io, 'usage: unslopped approve deploy|config|review|commit|pr');
   const state = loadState(root);
   const cycle = requireCycle(io, state);
   if (!cycle) return 2;
+  if (what === 'commit' || what === 'pr') {
+    const file = proposalPath(root, what);
+    if (!fs.existsSync(file)) return fail(io, `nothing proposed for ${what} yet`);
+    const text = fs.readFileSync(file, 'utf8');
+    cycle.approvals[what] = { at: new Date().toISOString(), hash: textHash(text) };
+    saveState(root, state);
+    out(io, `approved this ${what === 'commit' ? 'commit message' : 'pull request text'}:`);
+    for (const l of text.trimEnd().split('\n')) out(io, `  ${l}`);
+    out(io, `the assistant can now run: unslopped ${what === 'commit' ? 'commit' : 'pr'}`);
+    return 0;
+  }
   cycle.approvals[what] = { at: new Date().toISOString() };
   if (what === 'config') cycle.configHash = configHash(config);
   saveState(root, state);
   out(io, `approved ${what} for cycle ${cycle.id}`);
+  return 0;
+}
+
+function cmdPropose(io: Writer, root: string, args: string[], flags: Flags, deps: Deps): number {
+  const config = requireConfig(io, root);
+  if (!config) return 2;
+  const state = loadState(root);
+  const cycle = requireCycle(io, state);
+  if (!cycle) return 2;
+  const usage = 'usage: unslopped propose commit "<type(scope): subject>" [--file=<body.md>]';
+  if (args[0] !== 'commit') return fail(io, usage);
+  const subject = args.slice(1).join(' ').trim();
+  if (!subject) return fail(io, usage);
+  const fromFile = str(flags.file);
+  const body = (fromFile ? fs.readFileSync(fromFile, 'utf8') : deps.stdinText ?? '').trim();
+  const text = body ? `${subject}\n\n${body}\n` : `${subject}\n`;
+  const file = proposalPath(root, 'commit');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, text);
+  delete cycle.approvals.commit;
+  saveState(root, state);
+  out(io, `proposed commit message, ${path.relative(root, file).replace(/\\/g, '/')}:`);
+  for (const l of text.trimEnd().split('\n')) out(io, `  ${l}`);
+  out(io, 'waiting for the human to review it and run: unslopped approve commit');
+  return 0;
+}
+
+function cmdCommit(io: Writer, root: string): number {
+  const config = requireConfig(io, root);
+  if (!config) return 2;
+  const state = loadState(root);
+  const cycle = requireCycle(io, state);
+  if (!cycle) return 2;
+  const file = proposalPath(root, 'commit');
+  if (!fs.existsSync(file)) return fail(io, 'nothing proposed. run: unslopped propose commit "<type(scope): subject>" [--file=<body.md>]');
+  const text = fs.readFileSync(file, 'utf8');
+  const a = cycle.approvals.commit;
+  if (!a) return fail(io, 'the human has not approved this message yet. ask them to run: unslopped approve commit');
+  if (a.hash !== textHash(text)) return fail(io, 'the proposal changed after approval. ask the human to review it again with: unslopped approve commit');
+  const rel = path.relative(root, file).replace(/\\/g, '/');
+  const r = runCommand(`git commit -F "${rel}"`, root);
+  if (r.code !== 0) {
+    out(io, digest(redactSecrets(r.output).text, { lines: config.tokens.outputLines }).text);
+    return fail(io, `git commit exited ${r.code}`);
+  }
+  delete cycle.approvals.commit;
+  saveState(root, state);
+  fs.unlinkSync(file);
+  out(io, `committed: ${text.split('\n')[0]}`);
   return 0;
 }
 
@@ -988,6 +1051,10 @@ export async function main(argv: string[], root: string, io: Writer = process.st
         return await gate(io, root, flags, true, d);
       case 'approve':
         return cmdApprove(io, root, args);
+      case 'propose':
+        return cmdPropose(io, root, args, flags, d);
+      case 'commit':
+        return cmdCommit(io, root);
       case 'red':
         return cmdRed(io, root);
       case 'review':

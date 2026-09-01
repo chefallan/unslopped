@@ -54,6 +54,7 @@ export const PRACTICES_OFF = {
   audit: null,
   rollback: false,
   reviewApproval: false,
+  messageApproval: false,
   monitorNotes: false,
 };
 

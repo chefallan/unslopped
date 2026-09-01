@@ -126,6 +126,10 @@ function stable(value: unknown): unknown {
   return value;
 }
 
+export function textHash(text: string): string {
+  return createHash('sha256').update(text).digest('hex').slice(0, 16);
+}
+
 export function configHash(cfg: unknown): string {
   return createHash('sha256').update(JSON.stringify(stable(cfg))).digest('hex').slice(0, 16);
 }
