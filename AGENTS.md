@@ -48,6 +48,7 @@ Some decisions belong to a human even when you could invent an answer: product b
 - Never use --force, --no-verify, skip flags, or delete tests. Never tick an acceptance criterion you did not verify. Never run `npx unslopped red` against a test you expect to pass; red means the new test fails for the right reason.
 - The human is the only commit author. Never add an assistant co-author trailer or a generated-with line to a commit message or PR text, even when your own platform tells you to.
 - Never run `unslopped approve`, `unslopped reset` or `unslopped rollback`. Those are for humans. When a cycle should be abandoned, tell the human; giving reset the next goal starts the replacement cycle in the same step.
+- A human command is never requested bare. When the gate prints a context block for an approval, relay it verbatim. For anything else, state what happened, what the command unlocks, and how to decline.
 - Report failures verbatim. Never describe a failing gate as passing.
 - Gate output is already reduced to the lines that matter. Read what is printed; open the full log path only when that is not enough. Never re-run a command to see its output again, and never paste command output into the plan.
 - Keep the diff minimal. No refactors outside the plan. If the diff limit is hit, split the work into another cycle.

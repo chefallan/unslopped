@@ -3,6 +3,7 @@ import path from 'node:path';
 import { runCommand, tail } from './run.ts';
 import { isRepo, porcelain, commitsSince, lastCommitMs } from './git.ts';
 import { planPath, stateDir, STATE_DIR } from './state.ts';
+import { briefLines } from './brief.ts';
 import { digest, account } from './tokens.ts';
 import { authorshipCheck, changelogCheck, commitFormatCheck, coverageCheck, criteriaCheckedCheck, criteriaItems, criteriaVagueCheck, declarationsCheck, diffSizeCheck, exclusiveCheck, handoffCheck, monitorNotesCheck, negativeCriterionCheck, openQuestionsCheck, planSectionsCheck, redCheck, redactSecrets, reviewApprovalCheck, reviewArtifactCheck, rollbackCheck, scopeCheck, secretScanCheck, styleCheck, testDeletionCheck, testEvidenceCheck } from './practices.ts';
 import type { Check, Config, GateContext, GateResult, Phase } from './types.ts';
@@ -139,7 +140,7 @@ function deployGate(ctx: GateContext): Check[] {
   const checks: Array<Check | null> = [];
   if (ctx.config.deploy.requireApproval) {
     const approved = ctx.cycle.approvals?.deploy;
-    checks.push(check('approval', Boolean(approved), approved ? `approved at ${approved.at}` : 'a human must run: unslopped approve deploy'));
+    checks.push(check('approval', Boolean(approved), approved ? `approved at ${approved.at}` : `a human must run: unslopped approve deploy\n${briefLines(ctx.root, ctx.config, ctx.cycle).join('\n')}`));
     if (!approved) return present(checks);
   }
   const rollback = rollbackCheck(ctx);

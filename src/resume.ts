@@ -1,4 +1,5 @@
 import { statusLines } from './status.ts';
+import { briefLines } from './brief.ts';
 import type { Config, Cycle, Phase, State } from './types.ts';
 
 export function nextSteps(phase: Phase, config: Config, cycle: Cycle, cmd = 'unslopped'): string[] {
@@ -45,6 +46,9 @@ export function resumeLines(root: string, config: Config, state: State, cmd = 'u
   const last = cycle.history.at(-1);
   if (last && !last.pass) {
     for (const c of last.checks.filter((x) => !x.ok).slice(0, 4)) lines.push(`      FAIL ${c.name}: ${c.detail.split('\n')[0]}`);
+  }
+  if (cycle.phase === 'deploy' && config.deploy.requireApproval && !cycle.approvals?.deploy) {
+    lines.push(...briefLines(root, config, cycle, cmd));
   }
   lines.push('do next:');
   nextSteps(cycle.phase, config, cycle, cmd).forEach((s, i) => lines.push(`  ${i + 1}. ${s}`));

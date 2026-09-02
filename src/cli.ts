@@ -8,6 +8,7 @@ import { readStdinJson, readStdinText, sessionContext, promptContext, toolDecisi
 import { loadConfig, saveConfig, configHash, textHash, CONFIG_FILE } from './config.ts';
 import { loadState, saveState, newCycle, archiveCycle, archivedCycles, planPath, planTemplate, plansDir, proposalPath, stateDir, STATE_DIR } from './state.ts';
 import { resumeLines } from './resume.ts';
+import { briefEvidence } from './brief.ts';
 import { runGate, describeGate } from './gates.ts';
 import { init } from './init.ts';
 import { isRepo, headSha, currentBranch, addWorktree, commitsSinceDate, porcelain, addedLines } from './git.ts';
@@ -607,6 +608,10 @@ function cmdApprove(io: Writer, root: string, args: string[]): number {
   cycle.approvals[what] = { at: new Date().toISOString() };
   if (what === 'config') cycle.configHash = configHash(config);
   saveState(root, state);
+  if (what === 'deploy') {
+    out(io, 'you signed off on:');
+    for (const l of briefEvidence(root, config, cycle)) out(io, l);
+  }
   out(io, `approved ${what} for cycle ${cycle.id}`);
   return 0;
 }
