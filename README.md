@@ -37,7 +37,7 @@ Three actors run every task. You decide, the assistant thinks and types, the eng
 2. **Assistant** runs `unslopped start "<goal>"`. Issue keys are linked, protected branches refused, and uncommitted files that predate the cycle get a warning before they can poison the diff gates.
 3. **You** answer two or three design questions when the change is bigger than one file. The answers land in the plan, with the rejected options and why.
 4. **Assistant** writes the failing test first (`unslopped red`), implements until green, and advances with `unslopped next`. Each gate runs real commands: scope, tests with source, diff cap, secrets, style, build, audit, suite.
-5. **You** approve the words at release. The assistant proposes the commit message, you read it and run `unslopped approve commit`, and `unslopped commit` executes exactly the approved text, hash-checked.
+5. **You** approve the words at release. The assistant shows the full message in chat, then raises the prompt: the dialog's command line carries the verified title while the chat behind it holds the body. `unslopped commit` executes exactly the approved text, hash-checked.
 6. **You** approve the pull request text (`unslopped approve pr`), then the ship itself (`unslopped approve deploy`). The PR body arrives written for the reviewer: why, what changed, the judgment calls, the impact.
 7. **Engine** reviews every PR in CI with plain-language findings, flags exploitable-looking lines and leaked credentials on its own, then follows the merge and moves the issue to done.
 8. **Assistant** writes what it learned under Monitor. The cycle archives, a skill is saved, swept debt clears, and candidates for the next cycle are offered, never started unasked.
@@ -61,7 +61,7 @@ Eight phases, one active cycle per repository, state in `.unslopped/`. Each row'
 
 The loop closes through records rather than through magic: when a cycle completes, `unslopped` prints ready-to-paste candidates for the next one, drawn from the monitor notes, the open debt log and unresolved review findings, and the protocol tells the assistant to offer them rather than start one unasked. `unslopped start --from-debt` begins a sweep cycle whose plan is seeded from the debt log; the swept entries leave the log when that cycle completes.
 
-Nothing can be gamed mid-cycle: the config is hashed when a cycle starts, and changing it blocks every gate until a human runs `unslopped approve config`. `approve`, `reset` and `rollback` are human-only, and on Claude Code and Cursor the hooks deny them to the assistant before they execute, along with force pushes, `--no-verify` and writes to `.unslopped/` state.
+Nothing can be gamed mid-cycle: the config text is stored when a cycle starts, and changing it blocks every gate until a human runs `unslopped approve config`, with the changed lines shown. `approve`, `reset` and `rollback` are the human's decisions: on Claude Code and Cursor running one raises an allow-or-deny prompt for the human, and a mismatched title or cycle reference refuses even after an allow. Force pushes, `--no-verify` and writes to `.unslopped/` state stay denied outright.
 
 ## Commands
 
@@ -82,7 +82,11 @@ unslopped reset ["<goal>"]               abandon the cycle (humans only); with a
 Humans in the loop:
 
 ```
-unslopped approve deploy|config|review|commit|pr
+unslopped propose commit "<subject>" [--file=<body.md>]
+                                         write the commit message for the human to review
+unslopped commit                         create the commit from the approved proposal
+unslopped proposals                      show pending commit and PR text with its approval state
+unslopped approve deploy|config|review|commit|pr [--subject="<title>"] [--for="<cycle>"]
 unslopped rollback                       run commands.rollback (humans only)
 ```
 
@@ -224,6 +228,9 @@ Review also watches for lines that look exploitable: SQL built by hand, HTML sin
     "coverage": null,
     "maxDiffLines": 400,
     "secretScan": true,
+    "exploitScan": true,
+    "humanAuthorship": true,
+    "messageApproval": true,
     "style": { "forbidden": ["\\u2014", "\\u2013"], "maxCommentRatio": 0.25 },
     "commitPattern": "^(feat|fix|chore|docs|refactor|test|build|ci|perf|style|revert)(\\([^)]+\\))?!?: .+",
     "commitScopes": null,
@@ -242,7 +249,8 @@ Review also watches for lines that look exploitable: SQL built by hand, HTML sin
     "handoffNote": false,
     "worktree": false,
     "pullRequest": { "auto": false, "base": null, "draft": false }
-  }
+  },
+  "approvals": "prompt"
 }
 ```
 

@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+### Publish pass
+- The README documents the propose flow, the proposals command, the approvals option and the dialog-title chat-body reading order; the configuration sample matches the shipped defaults.
+
 The first release, born as ade and renamed to unslopped before publish.
 
 ### The engine
