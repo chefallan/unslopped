@@ -29,6 +29,7 @@ The first release, born as ade and renamed to unslopped before publish.
 - On hooked assistants (Claude Code, Cursor) the human commands raise a native allow-or-deny prompt with the evidence attached: approvals carry the deploy brief, the proposed commit message or the PR text; reset carries what would be abandoned; rollback carries the command it runs. Default; `"approvals": "command"` restores typed commands for all of them. A proposals command shows pending text without opening files.
 
 ### Named approvals
+- The protocol requires the show-then-prompt ritual: the full text ends the assistant's message, and the prompt opens the next turn, so the words are on screen when the dialog is.
 - Approve requests carry the decision in the command line the dialog shows: commit and pr take a verified subject, deploy takes a verified cycle reference, and mismatches refuse. Assistants must show the full text before raising the prompt.
 
 ### Second sweep
