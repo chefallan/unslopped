@@ -2,10 +2,10 @@
 name: debt-sweep-all-7-item-s
 title: Debt sweep, all: 7 item(s)
 created: 2026-09-02T09:57:46.831Z
-updated: 2026-09-02T19:25:13.094Z
-lastCycle: 20260902-ae26f9
-runs: 2
-completed: 2
+updated: 2026-09-02T21:24:11.193Z
+lastCycle: 20260902-adc0c3
+runs: 3
+completed: 3
 abandoned: 0
 gateFailures: 4
 tags: debt, sweep, item, src, test
@@ -16,23 +16,20 @@ tags: debt, sweep, item, src, test
 Requests like:
 - "Debt sweep, all: 7 item(s)"
 - "Debt sweep, all: 4 item(s)"
+- "Debt sweep, all: 1 item(s)"
 
 ## Playbook
 Files touched:
-- .gitignore
+- AGENTS.md
 - CHANGELOG.md
-- src/hooks.ts
-- src/init.ts
-- test/init.test.ts
-- test/sweep.test.ts
+- CLAUDE.md
+- src/protocol.ts
+- test/ritual.test.ts
 
 Acceptance criteria that passed:
-- proposal files get committed and their consumption dirties the release tree; gitignore...
-- the force-push rule matches anywhere in command text; anchor it at command position (sr...
-- the commit rule matches the filename commit.md in git commands; require commit as the g...
-- the approve prompt shows the proposal only when a cycle is active; show pending text wh...
+- the harness dialog shows only the command line and tool description; carry the decision...
 
-Gate runs: 12 (4 failed)
+Gate runs: 8 (0 failed)
 
 ## Known failures
 - none recorded
@@ -45,3 +42,5 @@ Gate runs: 12 (4 failed)
 - First cycle run entirely through prompts: both human decisions arrived as harness prompts with their content attached, zero typed commands.
 - The scope gate caught an unapplied plan edit (a silent string replace miss); worth preferring the editor tools for plan surgery.
 - The gitignore fix proved itself within its own cycle: consuming the proposal left the release tree clean.
+- The ritual ran end to end for the first time: body in chat, verified title in the dialog, prompt as the turn opener. The human confirmed the reading order makes sense.
+- Sweeps that verify already-landed work need a real change to pass the gates; pairing the verification with the protocol change was the right shape.
