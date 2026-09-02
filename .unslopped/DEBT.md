@@ -8,3 +8,4 @@ re-litigates them.
 Categories: cleanup (mechanical, safe to batch), pattern (a wrong shape new code would
 copy; fix it before it spreads), soon (costs someone time while it exists), accepted
 (evaluated and staying as is).
+- [soon] the harness dialog shows only the command line and tool description; carry the decision text in the approve command and verify it against the proposal (src/cli.ts) :: logged 2026-09-02
