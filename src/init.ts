@@ -73,7 +73,7 @@ function writeTarget(root: string, key: string, pointer = false): string {
 function ensureGitignore(root: string): boolean {
   const file = path.join(root, '.gitignore');
   const existing = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  const wanted = ['.unslopped/state.json', '.unslopped/cycles/', '.unslopped/history.jsonl', '.unslopped/logs/', '.unslopped/worktrees/', '.unslopped/graph.json', '.unslopped/graph.html', '.unslopped/GRAPH.md'];
+  const wanted = ['.unslopped/state.json', '.unslopped/cycles/', '.unslopped/history.jsonl', '.unslopped/logs/', '.unslopped/worktrees/', '.unslopped/proposals/', '.unslopped/graph.json', '.unslopped/graph.html', '.unslopped/GRAPH.md'];
   const missing = wanted.filter((w) => !existing.split(/\r?\n/).includes(w));
   if (missing.length === 0) return false;
   fs.writeFileSync(file, (existing.trimEnd() + '\n' + missing.join('\n') + '\n').replace(/^\n/, ''));

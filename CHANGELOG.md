@@ -28,6 +28,11 @@ The first release, born as ade and renamed to unslopped before publish.
 ### One-click decisions
 - On hooked assistants (Claude Code, Cursor) the human commands raise a native allow-or-deny prompt with the evidence attached: approvals carry the deploy brief, the proposed commit message or the PR text; reset carries what would be abandoned; rollback carries the command it runs. Default; `"approvals": "command"` restores typed commands for all of them. A proposals command shows pending text without opening files.
 
+### Second sweep
+- The approve prompt always shows the pending text or says nothing is pending, with or without an active cycle.
+- The proposals directory is gitignored; consuming a proposal no longer dirties the release tree.
+- The force-push rule matches at command position only, and the commit rule requires commit as the git subcommand, so the filename commit.md no longer trips it.
+
 ### In this sweep
 - The tool hook reads commands like a shell: heredoc bodies ignored, command names matched at command position, the config rule limited to real writes.
 - Config upgrades no longer read as mid-cycle tampering; drift shows the changed lines.

@@ -9,3 +9,4 @@ dist/
 .unslopped/graph.html
 .unslopped/GRAPH.md
 *.tgz
+.unslopped/proposals/

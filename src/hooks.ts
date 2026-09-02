@@ -122,7 +122,8 @@ const STATE_PATH = /\.unslopped[\\/](state\.json|cycles)/;
 const READ_ONLY = /^\s*(cat|type|less|more|head|tail|grep|unslopped|npx\s+unslopped)\b/;
 
 const HUMAN_ONLY = /(^|[|&;(]\s*)(?:npx\s+)?(?:unslopped|ade|awesome-delivery-engine)\s+(approve|reset|rollback)\b/m;
-const GIT_COMMIT = /(^|[|&;(]\s*)git\s[^|;&\n]*\bcommit\b/m;
+const GIT_COMMIT = /(^|[|&;(]\s*)git\b(?:\s+-[cC]\s+\S+|\s+--?[A-Za-z][^\s|;&]*)*\s+commit\b/m;
+const GIT_PUSH_FORCE = /(^|[|&;(]\s*)git\s+push\b[^|;&\n]*\s(--force|-f)\b/m;
 const CONFIG_FILE_NAME = /(?:unslopped|ade)\.config\.json/;
 const CONFIG_WRITE = new RegExp(`>>?\\s*\\S*${CONFIG_FILE_NAME.source}|\\b(?:sed\\s+-i|tee|rm|mv|cp)\\b[^|;&\\n]*${CONFIG_FILE_NAME.source}`);
 
@@ -167,14 +168,18 @@ export function toolDecision(root: string, toolName: unknown, input: Record<stri
       if (verb === 'approve') {
         const target = c.match(/approve\s+(deploy|config|review|commit|pr)\b/)?.[1] ?? 'this';
         const parts = [`The human decides this. Allowing runs: unslopped approve ${target}${cycle ? ` for cycle ${cycle.id} ${JSON.stringify(cycle.goal)}` : ''}.`];
-        if (cycle && (target === 'commit' || target === 'pr')) {
+        if (target === 'commit' || target === 'pr') {
           try {
             parts.push(fs.readFileSync(proposalPath(root, target), 'utf8').trimEnd());
           } catch {
-            parts.push('no proposal on file yet; the command will refuse.');
+            parts.push('nothing is pending; the command will refuse if allowed.');
           }
         }
-        if (cycle && target === 'deploy') parts.push(...briefEvidence(root, config, cycle));
+        if (target === 'deploy') {
+          if (cycle) parts.push(...briefEvidence(root, config, cycle));
+          else parts.push('nothing is pending, no cycle is active; the command will refuse if allowed.');
+        }
+        if (!cycle && target !== 'deploy' && target !== 'commit' && target !== 'pr') parts.push('nothing is pending, no cycle is active; the command will refuse if allowed.');
         return askHuman(parts.join('\n'));
       }
       if (verb === 'reset') {
@@ -192,7 +197,7 @@ export function toolDecision(root: string, toolName: unknown, input: Record<stri
     if (active && config.practices.messageApproval && GIT_COMMIT.test(c)) {
       return block('commit messages need the human to approve them first. Propose with `unslopped propose commit "<type(scope): subject>"`, ask the human to run `unslopped approve commit`, then run `unslopped commit`.');
     }
-    if (/\bgit\s+push\b[^|;&]*\s(--force|-f)\b/.test(c)) return block('force push is not allowed.');
+    if (GIT_PUSH_FORCE.test(c)) return block('force push is not allowed.');
     if (STATE_PATH.test(c) && !READ_ONLY.test(c)) return block('.unslopped/state.json and .unslopped/cycles are written by unslopped only. Read state with `unslopped status --json`.');
     if (active && CONFIG_WRITE.test(c)) {
       return block('unslopped.config.json cannot change during an active cycle. Ask the human to edit it and run `unslopped approve config`.');

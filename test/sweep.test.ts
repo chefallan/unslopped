@@ -93,3 +93,40 @@ test('approving prints the next action', () => {
   assert.equal(config.code, 0);
   assert.match(config.out, /advance with: unslopped next/);
 });
+
+function bareProject(): string {
+  const dir = tmpDir();
+  initRepo(dir);
+  writeConfig(dir, { test: PASS });
+  return dir;
+}
+
+test('the approve prompt shows pending text without an active cycle', () => {
+  const dir = bareProject();
+  fs.mkdirSync(path.join(dir, '.unslopped', 'proposals'), { recursive: true });
+  fs.writeFileSync(path.join(dir, '.unslopped', 'proposals', 'commit.md'), 'feat: pending thing\n\nBody line.\n');
+  const d = toolDecision(dir, 'Bash', { command: 'unslopped approve commit' });
+  assert.equal(d.ask, true);
+  assert.match(d.reason ?? '', /feat: pending thing/);
+});
+
+test('the approve prompt says when nothing is pending', () => {
+  const dir = bareProject();
+  const d = toolDecision(dir, 'Bash', { command: 'unslopped approve commit' });
+  assert.equal(d.ask, true);
+  assert.match(d.reason ?? '', /nothing is pending/i);
+});
+
+test('the force-push rule matches command position only', () => {
+  const dir = activeProject();
+  assert.equal(toolDecision(dir, 'Bash', { command: 'git push --force origin main' }).block, true);
+  assert.equal(toolDecision(dir, 'Bash', { command: 'echo "never git push --force origin main"' }).block, false);
+});
+
+test('the commit rule ignores commit as a filename', () => {
+  const dir = activeProject({ messageApproval: true });
+  assert.equal(toolDecision(dir, 'Bash', { command: 'git restore .unslopped/proposals/commit.md' }).block, false);
+  assert.equal(toolDecision(dir, 'Bash', { command: 'git show HEAD:.unslopped/proposals/commit.md' }).block, false);
+  assert.equal(toolDecision(dir, 'Bash', { command: 'git -c user.name=t commit -m "feat: x"' }).block, true);
+  assert.equal(toolDecision(dir, 'Bash', { command: 'git commit -m "feat: x"' }).block, true);
+});

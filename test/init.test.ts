@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { init, upsertBlock } from '../src/init.ts';
 import { START, END } from '../src/protocol.ts';
-import { tmpDir, NO_TRACKER_ENV } from './helpers.ts';
+import { tmpDir, git, cli, NO_TRACKER_ENV } from './helpers.ts';
 
 const env = NO_TRACKER_ENV;
 
@@ -67,4 +67,12 @@ test('protocol text has no em dashes', () => {
   init(dir, { only: ['agents'], env });
   const text = fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8');
   assert.doesNotMatch(text, /—/);
+});
+
+test('proposals are gitignored by init', () => {
+  const dir = tmpDir();
+  git(dir, 'init', '-q');
+  cli(dir, 'init', '--only=agents');
+  const ignore = fs.readFileSync(path.join(dir, '.gitignore'), 'utf8');
+  assert.ok(ignore.includes('.unslopped/proposals/'));
 });
