@@ -8,7 +8,3 @@ re-litigates them.
 Categories: cleanup (mechanical, safe to batch), pattern (a wrong shape new code would
 copy; fix it before it spreads), soon (costs someone time while it exists), accepted
 (evaluated and staying as is).
-- [soon] proposal files get committed and their consumption dirties the release tree; gitignore .unslopped/proposals (src/init.ts) :: logged 2026-09-02
-- [pattern] the force-push rule matches anywhere in command text; anchor it at command position (src/hooks.ts) :: logged 2026-09-02
-- [pattern] the commit rule matches the filename commit.md in git commands; require commit as the git subcommand (src/hooks.ts) :: logged 2026-09-02
-- [pattern] the approve prompt shows the proposal only when a cycle is active; show pending text whenever it exists and say when nothing is pending (src/hooks.ts) :: logged 2026-09-02
