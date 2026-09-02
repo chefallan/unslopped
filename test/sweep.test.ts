@@ -20,8 +20,9 @@ test('heredoc bodies no longer trip the human-only rule', () => {
   const dir = activeProject();
   const heredoc = "cat > notes.md << 'EOF'\nplease ask a human to run: unslopped reset\nEOF";
   assert.equal(toolDecision(dir, 'Bash', { command: heredoc }).block, false);
-  assert.equal(toolDecision(dir, 'Bash', { command: 'unslopped reset' }).block, true);
-  assert.equal(toolDecision(dir, 'Bash', { command: 'cd sub && npx unslopped approve deploy' }).block, true);
+  assert.ok(toolDecision(dir, 'Bash', { command: 'unslopped reset' }).ask, 'reset is intercepted');
+  const chained = toolDecision(dir, 'Bash', { command: 'cd sub && npx unslopped approve deploy' });
+  assert.ok(chained.block || chained.ask, 'a chained approve is still intercepted');
   assert.equal(toolDecision(dir, 'Bash', { command: 'echo "the docs mention unslopped approve deploy"' }).block, false);
 });
 

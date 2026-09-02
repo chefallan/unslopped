@@ -108,7 +108,7 @@ function ghAuthToken(): string | null {
 }
 
 export function githubToken(env: Env): string | undefined {
-  return env.GITHUB_TOKEN || env.GH_TOKEN || ghAuthToken() || undefined;
+  return env.GITHUB_TOKEN || env.GH_TOKEN || (env.UNSLOPPED_NO_GH_AUTH ? undefined : ghAuthToken()) || undefined;
 }
 
 export function githubRepo(root: string, configured: string | null | undefined, env: Env): string | null {
@@ -119,7 +119,7 @@ export function discoverSecrets(config: { tracker?: Partial<TrackerConfig> }, en
   const t = config.tracker ?? {};
   if (t.provider !== 'github') return env;
   const next: Env = { ...env };
-  if (!next.GITHUB_TOKEN) next.GITHUB_TOKEN = next.GH_TOKEN || ghAuthToken() || undefined;
+  if (!next.GITHUB_TOKEN) next.GITHUB_TOKEN = next.GH_TOKEN || (next.UNSLOPPED_NO_GH_AUTH ? undefined : ghAuthToken()) || undefined;
   if (!next.GITHUB_REPOSITORY && !t.github?.repo) next.GITHUB_REPOSITORY = githubRepoFromUrl(remoteUrl(root)) ?? undefined;
   return next;
 }

@@ -86,6 +86,8 @@ unslopped approve deploy|config|review|commit|pr
 unslopped rollback                       run commands.rollback (humans only)
 ```
 
+On Claude Code and Cursor, human decisions are one click by default: the assistant runs the command, the hook answers "ask", and your editor shows a native allow-or-deny prompt carrying the evidence. Approvals carry the deploy brief, the proposed commit message or the PR text; reset carries what would be abandoned; rollback carries the command it would run. Denying stops the assistant; nothing executes. Set `"approvals": "command"` in the config to require typed commands for all of them. One caution comes with the convenience: prompts invite reflex clicks, and a reflex-clicked reset destroys a finished cycle, so read the prompt body before allowing. Assistants without permission prompts keep the typed flow.
+
 Words need approval too, when `practices.messageApproval` is on (the default): the assistant writes the commit message with `unslopped propose commit`, the human reads it and runs `unslopped approve commit`, and `unslopped commit` executes exactly the approved text, hash-checked. `unslopped pr` writes its title and body to `.unslopped/proposals/pr.md` and refuses to post until `unslopped approve pr`; any new commit invalidates the approval by itself. The tool hook denies a raw assistant `git commit` while this is on.
 
 Reviews and pull requests:

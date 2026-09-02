@@ -60,8 +60,8 @@ test('prompt context asks for init on an uninitialized repo, is silent outside g
 test('tool decisions block human only commands, state edits', () => {
   const dir = project({ cycle: true });
   const bash = (command) => toolDecision(dir, 'Bash', { command });
-  assert.equal(bash('unslopped approve deploy').block, true);
-  assert.equal(bash('npx unslopped reset').block, true);
+  assert.equal(bash('unslopped approve deploy').ask, true);
+  assert.equal(bash('npx unslopped reset').ask, true);
   assert.equal(bash('git commit --no-verify -m x').block, true);
   assert.equal(bash('git push --force origin main').block, true);
   assert.equal(bash('git push -f').block, true);

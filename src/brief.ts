@@ -23,8 +23,9 @@ export function briefLines(root: string, config: Config, cycle: Cycle, cmd = 'un
   lines.push(`  commits   ${subjects.length}${subjects.length ? ':' : ''}`);
   for (const s of subjects.slice(0, 4)) lines.push(`              ${s}`);
   if (cycle.review) lines.push(`  review    ${cycle.review.critical} critical, ${cycle.review.major} major, ${cycle.review.minor} minor`);
-  const failed = [...new Set(cycle.history.filter((h) => !h.pass).map((h) => h.phase))];
-  lines.push(`  gates     ${cycle.history.length} run(s)${failed.length ? `, failed then fixed at: ${failed.join(', ')}` : ', none failed'}`);
+  const history = cycle.history ?? [];
+  const failed = [...new Set(history.filter((h) => !h.pass).map((h) => h.phase))];
+  lines.push(`  gates     ${history.length} run(s)${failed.length ? `, failed then fixed at: ${failed.join(', ')}` : ', none failed'}`);
   lines.push('approving unlocks:');
   lines.push(`  deploy    ${config.commands.deploy ?? 'no deploy command; the cycle completes and archives'}`);
   lines.push(`  rollback  ${config.commands.rollback ?? 'none configured'}`);

@@ -73,6 +73,7 @@ export interface Config {
   practices: Practices;
   graph: { enabled: boolean; maxFiles: number; maxFileKb: number; ignore: string[] };
   assistants: string[];
+  approvals: 'prompt' | 'command';
 }
 
 export interface Check {

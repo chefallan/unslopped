@@ -27,9 +27,8 @@ test('claude hooks read the event from stdin, use its cwd', () => {
   assert.match(r.out, /Issue APP-3 will be linked/);
 
   r = run(elsewhere, { cwd: dir, tool_name: 'Bash', tool_input: { command: 'unslopped approve deploy' } }, 'hook', 'claude', 'tool');
-  assert.equal(r.code, 2);
-  assert.match(r.err, /for humans/);
-  assert.equal(r.out, '');
+  assert.equal(r.code, 0);
+  assert.match(r.out, /"permissionDecision":"ask"/);
 
   r = run(elsewhere, { cwd: dir, tool_name: 'Bash', tool_input: { command: 'npm test' } }, 'hook', 'claude', 'tool');
   assert.equal(r.code, 0);

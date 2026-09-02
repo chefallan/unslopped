@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadConfig } from './config.ts';
-import { loadState, saveState } from './state.ts';
+import { loadState, proposalPath, saveState } from './state.ts';
+import { briefEvidence } from './brief.ts';
 import { isRepo, currentBranch } from './git.ts';
 import { protocolBody, START } from './protocol.ts';
 import { account } from './tokens.ts';
@@ -132,6 +133,7 @@ function commandView(command: string): string {
 
 export interface Decision {
   block: boolean;
+  ask?: boolean;
   reason?: string;
 }
 
@@ -139,10 +141,15 @@ function block(reason: string): Decision {
   return { block: true, reason };
 }
 
+function askHuman(reason: string): Decision {
+  return { block: false, ask: true, reason };
+}
+
 export function toolDecision(root: string, toolName: unknown, input: Record<string, unknown> = {}): Decision {
   const config = loadConfig(root);
   if (!config) return { block: false };
-  const active = Boolean(loadState(root).cycle);
+  const state = loadState(root);
+  const active = Boolean(state.cycle);
   const tool = String(toolName ?? '');
   if (EDIT_TOOLS.has(tool)) {
     const file = String(input.file_path ?? input.notebook_path ?? '');
@@ -152,7 +159,32 @@ export function toolDecision(root: string, toolName: unknown, input: Record<stri
   }
   if (SHELL_TOOLS.has(tool)) {
     const c = commandView(String(input.command ?? ''));
-    if (HUMAN_ONLY.test(c)) return block('`unslopped approve`, `unslopped reset` and `unslopped rollback` are for humans. Ask the human to run it.');
+    const humanOnly = c.match(HUMAN_ONLY);
+    if (humanOnly) {
+      if (config.approvals === 'command') return block('`unslopped approve`, `unslopped reset` and `unslopped rollback` are for humans. Ask the human to run it.');
+      const cycle = state.cycle;
+      const verb = humanOnly[2];
+      if (verb === 'approve') {
+        const target = c.match(/approve\s+(deploy|config|review|commit|pr)\b/)?.[1] ?? 'this';
+        const parts = [`The human decides this. Allowing runs: unslopped approve ${target}${cycle ? ` for cycle ${cycle.id} ${JSON.stringify(cycle.goal)}` : ''}.`];
+        if (cycle && (target === 'commit' || target === 'pr')) {
+          try {
+            parts.push(fs.readFileSync(proposalPath(root, target), 'utf8').trimEnd());
+          } catch {
+            parts.push('no proposal on file yet; the command will refuse.');
+          }
+        }
+        if (cycle && target === 'deploy') parts.push(...briefEvidence(root, config, cycle));
+        return askHuman(parts.join('\n'));
+      }
+      if (verb === 'reset') {
+        const what = cycle
+          ? `Allowing abandons cycle ${cycle.id} ${JSON.stringify(cycle.goal ?? '')} at phase ${cycle.phase} and archives it as abandoned.`
+          : 'No cycle is active; the command will refuse.';
+        return askHuman(`The human decides this. ${what}`);
+      }
+      return askHuman(`The human decides this. Allowing runs the rollback command: ${config.commands.rollback ?? '(none configured; the command will refuse)'}.`);
+    }
     if (/--no-verify\b/.test(c)) return block('--no-verify is not allowed. Fix what the hook reports.');
     if (GIT_COMMIT.test(c) && /co-authored-by/i.test(c) && ASSISTANT_ID.test(c)) {
       return block('commits carry the human as the only author. Drop the assistant co-author trailer and commit again.');

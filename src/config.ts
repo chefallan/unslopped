@@ -90,6 +90,7 @@ export function defaultConfig(root: string): Config {
     practices: { ...practiceDefaults(), audit: detectAudit(root) },
     graph: graphDefaults(),
     assistants: [...ASSISTANTS],
+    approvals: 'prompt',
   };
 }
 
@@ -110,6 +111,7 @@ export function loadConfig(root: string): Config | null {
     practices: mergePractices(cfg.practices as Partial<Config['practices']> | undefined),
     graph: mergeGraph(cfg.graph as Partial<Config['graph']> | undefined),
     assistants: (cfg.assistants as string[] | undefined) ?? [...ASSISTANTS],
+    approvals: cfg.approvals === 'command' ? 'command' : 'prompt',
   };
 }
 

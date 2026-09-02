@@ -67,6 +67,7 @@ const HELP = `unslopped <command>
   propose commit "<subject>" [--file=<body.md>]
                                            write the commit message for the human to review
   commit                                   create the commit from the approved proposal
+  proposals                                show pending commit and PR text with its approval state
   rollback                                 run commands.rollback (humans only)
   log                                      print gate history for the active cycle
   tracker [--issue=KEY]                    show tracker settings, optionally fetch an issue
@@ -241,6 +242,10 @@ function cmdHook(io: Writer, root: string, args: string[], deps: Deps): number {
     }
     if (event === 'tool') {
       const d = toolDecision(cwd, input.tool_name, (input.tool_input ?? {}) as Record<string, unknown>);
+      if (d.ask) {
+        out(io, JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'ask', permissionDecisionReason: d.reason ?? '' } }));
+        return 0;
+      }
       if (!d.block) return 0;
       deps.stderr.write(`unslopped: ${d.reason}\n`);
       return 2;
@@ -248,7 +253,11 @@ function cmdHook(io: Writer, root: string, args: string[], deps: Deps): number {
   }
   if (assistant === 'cursor' && event === 'shell') {
     const d = toolDecision(cwd, 'Bash', { command: input.command });
-    const verdict = d.block ? { permission: 'deny', userMessage: `unslopped: ${d.reason}`, agentMessage: `unslopped: ${d.reason}` } : { permission: 'allow' };
+    const verdict = d.ask
+      ? { permission: 'ask', userMessage: d.reason ?? '', agentMessage: d.reason ?? '' }
+      : d.block
+        ? { permission: 'deny', userMessage: `unslopped: ${d.reason}`, agentMessage: `unslopped: ${d.reason}` }
+        : { permission: 'allow' };
     io.write(JSON.stringify(verdict) + '\n');
     return 0;
   }
@@ -643,6 +652,25 @@ function cmdPropose(io: Writer, root: string, args: string[], flags: Flags, deps
   out(io, `proposed commit message, ${path.relative(root, file).replace(/\\/g, '/')}:`);
   for (const l of text.trimEnd().split('\n')) out(io, `  ${l}`);
   out(io, 'waiting for the human to review it and run: unslopped approve commit');
+  return 0;
+}
+
+function cmdProposals(io: Writer, root: string): number {
+  const config = requireConfig(io, root);
+  if (!config) return 2;
+  const cycle = loadState(root).cycle;
+  let found = 0;
+  for (const kind of ['commit', 'pr'] as const) {
+    const file = proposalPath(root, kind);
+    if (!fs.existsSync(file)) continue;
+    found++;
+    const text = fs.readFileSync(file, 'utf8');
+    const a = cycle?.approvals?.[kind];
+    const state = a && a.hash === textHash(text) ? `approved, run: unslopped ${kind === 'commit' ? 'commit' : 'pr'}` : `waiting for: unslopped approve ${kind}`;
+    out(io, `${kind} proposal (${state}):`);
+    for (const l of text.trimEnd().split('\n')) out(io, `  ${l}`);
+  }
+  if (!found) out(io, 'no proposals pending');
   return 0;
 }
 
@@ -1072,6 +1100,8 @@ export async function main(argv: string[], root: string, io: Writer = process.st
         return cmdApprove(io, root, args);
       case 'propose':
         return cmdPropose(io, root, args, flags, d);
+      case 'proposals':
+        return cmdProposals(io, root);
       case 'commit':
         return cmdCommit(io, root);
       case 'red':

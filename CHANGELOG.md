@@ -25,6 +25,9 @@ The first release, born as ade and renamed to unslopped before publish.
 - Memory: every completed cycle becomes a skill, debt is logged and swept by seeded cycles, preferences follow the user, metrics come from the archive.
 - Code map with symbols, imports and mined rationale keeps assistant token use low.
 
+### One-click decisions
+- On hooked assistants (Claude Code, Cursor) the human commands raise a native allow-or-deny prompt with the evidence attached: approvals carry the deploy brief, the proposed commit message or the PR text; reset carries what would be abandoned; rollback carries the command it runs. Default; `"approvals": "command"` restores typed commands for all of them. A proposals command shows pending text without opening files.
+
 ### In this sweep
 - The tool hook reads commands like a shell: heredoc bodies ignored, command names matched at command position, the config rule limited to real writes.
 - Config upgrades no longer read as mid-cycle tampering; drift shows the changed lines.

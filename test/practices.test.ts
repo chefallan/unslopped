@@ -267,6 +267,7 @@ test('start refuses protected branches, suggests one, approve review, rollback w
   const after = JSON.parse(fs.readFileSync(path.join(dir, '.unslopped', 'state.json'), 'utf8'));
   assert.equal(after.cycle.history.at(-1).checks[0].name, 'rollback');
 
-  assert.equal(toolDecision(dir, 'Bash', { command: 'unslopped rollback' }).block, true);
+  const intercepted = toolDecision(dir, 'Bash', { command: 'unslopped rollback' });
+  assert.ok(intercepted.block || intercepted.ask, 'rollback is intercepted');
   assert.equal(cli(dir, 'approve', 'bogus').code, 2);
 });

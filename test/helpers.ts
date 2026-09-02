@@ -23,7 +23,7 @@ export function initRepo(cwd: string): void {
   git(cwd, 'commit', '-q', '-m', 'init');
 }
 
-export const NO_TRACKER_ENV = { LINEAR_API_KEY: '', JIRA_API_TOKEN: '', JIRA_BASE_URL: '', GITHUB_TOKEN: '', GH_TOKEN: '', UNSLOPPED_WEBHOOK_URL: '' };
+export const NO_TRACKER_ENV = { LINEAR_API_KEY: '', JIRA_API_TOKEN: '', JIRA_BASE_URL: '', GITHUB_TOKEN: '', GH_TOKEN: '', UNSLOPPED_WEBHOOK_URL: '', UNSLOPPED_NO_GH_AUTH: '1' };
 
 export const PRACTICES_OFF = {
   planSections: [] as string[],
