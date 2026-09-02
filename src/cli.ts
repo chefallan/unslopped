@@ -33,6 +33,14 @@ import type { Config, Cycle, Deps, Env, Flags, GateResult, Issue, Provider, Revi
 
 const HELP = `unslopped <command>
 
+  the loop: you prompt, the assistant starts a cycle, and the phases run:
+  plan, code, build, test, release, deploy, operate, monitor. every phase
+  ends in a gate that runs real commands and reads exit codes.
+
+  your moments: answer the design questions, approve commit, approve pr,
+  approve deploy, merge the pull request. everything else runs itself.
+  the long guide lives in the README.
+
   install [--only=claude,codex]            one time, per machine: hooks for Claude Code and Cursor, global rules for
                                            Codex, Gemini, Windsurf, Copilot, OpenCode, Cline, Roo, Kilo, Continue, Goose
   uninstall [--only=...]                   remove what install wrote
@@ -1094,6 +1102,7 @@ export async function main(argv: string[], root: string, io: Writer = process.st
         return cmdGraph(io, root, args, flags);
       case 'help':
       case '--help':
+      case '-h':
         out(io, HELP);
         return 0;
       default:

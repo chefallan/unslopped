@@ -1,6 +1,6 @@
 # unslopped
 
-`unslopped` is a delivery gatekeeper for AI coding assistants. One prompt goes in; verified software comes out. Every phase of the lifecycle ends in a gate that runs real commands and reads exit codes, so an assistant cannot advance by claiming success. It has to earn it.
+`unslopped` keeps AI coding assistants from shipping slop. One prompt goes in; verified software comes out. In between sit eight gates that run real commands and read real exit codes, because "all tests pass" is a sentence, not a test run. Assistants are brilliant at writing code and unbeatable at declaring victory, so nothing here advances on a claim. It has to earn it.
 
 Works with Claude Code, Cursor, Copilot, Codex, Gemini CLI, Windsurf, OpenCode, Cline, Roo, Kilo, Continue, Goose and anything else that reads instruction files or runs shell commands.
 
@@ -28,6 +28,21 @@ unslopped init
 `init` detects the build, lint, test, setup, audit and deploy commands (npm, pnpm, yarn, bun, Cargo, Go, Python, Make), detects the project tracker, writes the protocol into the assistant instruction files, installs git hooks that refresh the code map, and creates the state directory. `--all` covers every supported assistant file, `--ci` adds a GitHub Actions review workflow and a PR template, `--tracker=<name>` overrides detection.
 
 Then give the assistant one prompt. It runs `unslopped start "<the request>"` and works through the phases; you approve the deploy.
+
+## The journey
+
+Three actors run every task. You decide, the assistant thinks and types, the engine verifies and remembers.
+
+1. **You** say what you want, once. The hook wraps your prompt with the active cycle, code map pointers, matching skills and your preferences before the assistant reads it.
+2. **Assistant** runs `unslopped start "<goal>"`. Issue keys are linked, protected branches refused, and uncommitted files that predate the cycle get a warning before they can poison the diff gates.
+3. **You** answer two or three design questions when the change is bigger than one file. The answers land in the plan, with the rejected options and why.
+4. **Assistant** writes the failing test first (`unslopped red`), implements until green, and advances with `unslopped next`. Each gate runs real commands: scope, tests with source, diff cap, secrets, style, build, audit, suite.
+5. **You** approve the words at release. The assistant proposes the commit message, you read it and run `unslopped approve commit`, and `unslopped commit` executes exactly the approved text, hash-checked.
+6. **You** approve the pull request text (`unslopped approve pr`), then the ship itself (`unslopped approve deploy`). The PR body arrives written for the reviewer: why, what changed, the judgment calls, the impact.
+7. **Engine** reviews every PR in CI with plain-language findings, flags exploitable-looking lines and leaked credentials on its own, then follows the merge and moves the issue to done.
+8. **Assistant** writes what it learned under Monitor. The cycle archives, a skill is saved, swept debt clears, and candidates for the next cycle are offered, never started unasked.
+
+Your five moments, total: the design questions, `approve commit`, `approve pr`, `approve deploy`, and the merge. Lost the thread mid-cycle? `unslopped resume` says where things stand and what to do next.
 
 ## How a cycle runs
 
