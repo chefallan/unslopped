@@ -63,7 +63,9 @@ const HELP = `unslopped <command>
   pr status [--number=<n>]                 show the PR state; on merge tell the tracker and move the issue to done
   tokens [--json]                          token accounting: gate output shown vs raw, hook context, per cycle and total
   metrics [--json]                         lead time, deployment frequency, change failure rate, recovery time, gate first-pass rates
-  approve deploy|config|review|commit|pr   record a human approval
+  approve deploy|config|review|commit|pr   record a human approval. commit and pr take --subject="<proposed title>",
+                                           deploy takes --for="<cycle id and goal>"; mismatches refuse, so the request
+                                           command itself shows the human what is being approved
   propose commit "<subject>" [--file=<body.md>]
                                            write the commit message for the human to review
   commit                                   create the commit from the approved proposal
@@ -597,7 +599,7 @@ async function gate(io: Writer, root: string, flags: Flags, advance: boolean, de
   return 0;
 }
 
-function cmdApprove(io: Writer, root: string, args: string[]): number {
+function cmdApprove(io: Writer, root: string, args: string[], flags: Flags): number {
   const config = requireConfig(io, root);
   if (!config) return 2;
   const what = args[0];
@@ -609,12 +611,19 @@ function cmdApprove(io: Writer, root: string, args: string[]): number {
     const file = proposalPath(root, what);
     if (!fs.existsSync(file)) return fail(io, `nothing proposed for ${what} yet`);
     const text = fs.readFileSync(file, 'utf8');
+    const subject = str(flags.subject);
+    const first = text.split(/\r?\n/)[0].trim();
+    if (subject !== null && subject.trim() !== first) return fail(io, `the subject does not match the proposal. proposed: ${first}`);
     cycle.approvals[what] = { at: new Date().toISOString(), hash: textHash(text) };
     saveState(root, state);
     out(io, `approved this ${what === 'commit' ? 'commit message' : 'pull request text'}:`);
     for (const l of text.trimEnd().split('\n')) out(io, `  ${l}`);
     out(io, `the assistant can now run: unslopped ${what === 'commit' ? 'commit' : 'pr'}`);
     return 0;
+  }
+  if (what === 'deploy') {
+    const forWhat = str(flags['for']);
+    if (forWhat !== null && !forWhat.trim().startsWith(cycle.id)) return fail(io, `--for does not name the active cycle. active: ${cycle.id} ${JSON.stringify(cycle.goal)}`);
   }
   cycle.approvals[what] = { at: new Date().toISOString() };
   if (what === 'config') {
@@ -1097,7 +1106,7 @@ export async function main(argv: string[], root: string, io: Writer = process.st
       case 'next':
         return await gate(io, root, flags, true, d);
       case 'approve':
-        return cmdApprove(io, root, args);
+        return cmdApprove(io, root, args, flags);
       case 'propose':
         return cmdPropose(io, root, args, flags, d);
       case 'proposals':
