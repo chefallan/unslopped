@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { mergeTracker, trackerDefaults } from './tracker.ts';
 import { mergePractices, practiceDefaults } from './practices.ts';
 import { graphDefaults, mergeGraph } from './graph.ts';
-import type { Commands, Config } from './types.ts';
+import type { Commands, Config, Cycle } from './types.ts';
 
 export const CONFIG_FILE = 'unslopped.config.json';
 export const ASSISTANTS = ['agents', 'claude', 'cursor', 'copilot', 'windsurf', 'gemini'];
@@ -128,6 +128,30 @@ function stable(value: unknown): unknown {
 
 export function textHash(text: string): string {
   return createHash('sha256').update(text).digest('hex').slice(0, 16);
+}
+
+export function readConfigText(root: string): string | null {
+  try {
+    return fs.readFileSync(configPath(root), 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+export function configDriftLines(root: string, config: Config, cycle: Cycle): string[] | null {
+  if (cycle.configText != null) {
+    const current = readConfigText(root) ?? '';
+    if (current === cycle.configText) return null;
+    const before = cycle.configText.split(/\r?\n/);
+    const after = current.split(/\r?\n/);
+    const gone = before.filter((l) => l.trim() && !after.includes(l));
+    const added = after.filter((l) => l.trim() && !before.includes(l));
+    const shown = [...gone.slice(0, 4).map((l) => `- ${l.trim()}`), ...added.slice(0, 4).map((l) => `+ ${l.trim()}`)];
+    return ['unslopped.config.json changed during this cycle:', ...shown];
+  }
+  const current = configHash(config);
+  if (current === cycle.configHash) return null;
+  return [`unslopped.config.json changed during this cycle (${cycle.configHash} -> ${current}).`];
 }
 
 export function configHash(cfg: unknown): string {

@@ -473,7 +473,7 @@ export function scopeCheck(ctx: GateContext, plan: string): Check | null {
   if (!ctx.config.practices.scope) return null;
   const declared = planSection(plan, 'Files to touch')
     .split(/\r?\n/)
-    .map((l) => l.replace(/^[-*]\s*/, '').replace(/`/g, '').trim())
+    .map((l) => l.replace(/^[-*]\s*/, '').replace(/`/g, '').replace(/\s*\([^)]*\)\s*$/, '').trim())
     .filter((l) => l && !EMPTY_SECTION.test(l));
   if (!declared.length) return null;
   const covers = (file: string) =>

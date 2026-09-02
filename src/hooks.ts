@@ -120,6 +120,16 @@ const SHELL_TOOLS = new Set(['Bash', 'PowerShell', 'shell']);
 const STATE_PATH = /\.unslopped[\\/](state\.json|cycles)/;
 const READ_ONLY = /^\s*(cat|type|less|more|head|tail|grep|unslopped|npx\s+unslopped)\b/;
 
+const HUMAN_ONLY = /(^|[|&;(]\s*)(?:npx\s+)?(?:unslopped|ade|awesome-delivery-engine)\s+(approve|reset|rollback)\b/m;
+const GIT_COMMIT = /(^|[|&;(]\s*)git\s[^|;&\n]*\bcommit\b/m;
+const CONFIG_FILE_NAME = /(?:unslopped|ade)\.config\.json/;
+const CONFIG_WRITE = new RegExp(`>>?\\s*\\S*${CONFIG_FILE_NAME.source}|\\b(?:sed\\s+-i|tee|rm|mv|cp)\\b[^|;&\\n]*${CONFIG_FILE_NAME.source}`);
+
+function commandView(command: string): string {
+  const heredoc = command.search(/<<-?\s*['"]?\w/);
+  return heredoc === -1 ? command : command.slice(0, heredoc);
+}
+
 export interface Decision {
   block: boolean;
   reason?: string;
@@ -141,18 +151,18 @@ export function toolDecision(root: string, toolName: unknown, input: Record<stri
     return { block: false };
   }
   if (SHELL_TOOLS.has(tool)) {
-    const c = String(input.command ?? '');
-    if (/\b(?:unslopped|ade|awesome-delivery-engine)\s+(approve|reset|rollback)\b/.test(c)) return block('`unslopped approve`, `unslopped reset` and `unslopped rollback` are for humans. Ask the human to run it.');
+    const c = commandView(String(input.command ?? ''));
+    if (HUMAN_ONLY.test(c)) return block('`unslopped approve`, `unslopped reset` and `unslopped rollback` are for humans. Ask the human to run it.');
     if (/--no-verify\b/.test(c)) return block('--no-verify is not allowed. Fix what the hook reports.');
-    if (/\bgit\b[^|;&]*\bcommit\b/.test(c) && /co-authored-by/i.test(c) && ASSISTANT_ID.test(c)) {
+    if (GIT_COMMIT.test(c) && /co-authored-by/i.test(c) && ASSISTANT_ID.test(c)) {
       return block('commits carry the human as the only author. Drop the assistant co-author trailer and commit again.');
     }
-    if (active && config.practices.messageApproval && /\bgit\b[^|;&]*\bcommit\b/.test(c)) {
+    if (active && config.practices.messageApproval && GIT_COMMIT.test(c)) {
       return block('commit messages need the human to approve them first. Propose with `unslopped propose commit "<type(scope): subject>"`, ask the human to run `unslopped approve commit`, then run `unslopped commit`.');
     }
     if (/\bgit\s+push\b[^|;&]*\s(--force|-f)\b/.test(c)) return block('force push is not allowed.');
     if (STATE_PATH.test(c) && !READ_ONLY.test(c)) return block('.unslopped/state.json and .unslopped/cycles are written by unslopped only. Read state with `unslopped status --json`.');
-    if (active && /(?:unslopped|ade)\.config\.json/.test(c) && /(>|\bsed\s+-i|\btee\b|\brm\b|\bmv\b|\bcp\b)/.test(c)) {
+    if (active && CONFIG_WRITE.test(c)) {
       return block('unslopped.config.json cannot change during an active cycle. Ask the human to edit it and run `unslopped approve config`.');
     }
   }

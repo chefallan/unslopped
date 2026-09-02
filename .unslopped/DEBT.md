@@ -14,3 +14,4 @@ copy; fix it before it spreads), soon (costs someone time while it exists), acce
 - [pattern] scopeCheck should tolerate a trailing parenthetical note on Files to touch entries (src/practices.ts) :: logged 2026-09-01, cycle 20260831-08ed52
 - [soon] config hash treats new practice defaults from an upgrade as mid-cycle tampering; hash the raw file or a stored snapshot instead (src/config.ts) :: logged 2026-09-01, cycle 20260901-3b9ebc
 - [pattern] the start refusal message still says finish or reset; it should point at resume first (src/cli.ts) :: logged 2026-09-02, cycle 20260902-4b46ef
+- [pattern] approve should print what happens next; approval alone does not advance the phase (src/cli.ts) :: logged 2026-09-02

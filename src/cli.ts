@@ -5,7 +5,7 @@ import { PHASES, nextPhase, phaseIndex } from './phases.ts';
 import { statusLines } from './status.ts';
 import { install, uninstall, onPath } from './install.ts';
 import { readStdinJson, readStdinText, sessionContext, promptContext, toolDecision } from './hooks.ts';
-import { loadConfig, saveConfig, configHash, textHash, CONFIG_FILE } from './config.ts';
+import { loadConfig, saveConfig, configHash, configDriftLines, readConfigText, textHash, CONFIG_FILE } from './config.ts';
 import { loadState, saveState, newCycle, archiveCycle, archivedCycles, planPath, planTemplate, plansDir, proposalPath, stateDir, STATE_DIR } from './state.ts';
 import { resumeLines } from './resume.ts';
 import { briefEvidence } from './brief.ts';
@@ -167,10 +167,11 @@ function requireConfig(io: Writer, root: string): Config | null {
   return config;
 }
 
-function configDrift(io: Writer, config: Config, cycle: Cycle): boolean {
-  const current = configHash(config);
-  if (current === cycle.configHash) return false;
-  out(io, `FAIL ${CONFIG_FILE} changed during this cycle (${cycle.configHash} -> ${current}).`);
+function configDrift(io: Writer, root: string, config: Config, cycle: Cycle): boolean {
+  const lines = configDriftLines(root, config, cycle);
+  if (!lines) return false;
+  out(io, `FAIL ${lines[0]}`);
+  for (const l of lines.slice(1)) out(io, `  ${l}`);
   out(io, 'A human must review the change and run: unslopped approve config');
   return true;
 }
@@ -446,7 +447,7 @@ async function cmdStart(io: Writer, root: string, args: string[], flags: Flags, 
   }
   if (!goal && !explicit) return fail(io, 'usage: unslopped start "<goal>" [--issue=KEY] [--no-issue] [--from-debt]');
   const state = loadState(root);
-  if (state.cycle) return fail(io, `cycle ${state.cycle.id} is active in phase ${state.cycle.phase}. finish it or run: unslopped reset`);
+  if (state.cycle) return fail(io, `cycle ${state.cycle.id} is active in phase ${state.cycle.phase}. continue it with: unslopped resume. a human can abandon it with: unslopped reset "<next goal>"`);
   if (!isRepo(root)) return fail(io, 'not a git repository. run git init first');
   config = autoDetect(io, root, config, deps.env);
   deps = { ...deps, env: discoverSecrets(config, deps.env, root) };
@@ -475,6 +476,7 @@ async function cmdStart(io: Writer, root: string, args: string[], flags: Flags, 
   }
   const matches = config.memory.skills ? matchSkills(root, deps.home, goal) : [];
   const cycle = newCycle(goal, configHash(config), headSha(work), issue);
+  cycle.configText = readConfigText(work) ?? undefined;
   cycle.usedSkills = matches.filter((m) => m.strong).map((m) => m.name);
   if (useWorktree) cycle.worktree = work;
   refreshDetected(work);
@@ -509,7 +511,7 @@ async function gate(io: Writer, root: string, flags: Flags, advance: boolean, de
   const state = loadState(root);
   const cycle = requireCycle(io, state);
   if (!cycle) return 2;
-  if (configDrift(io, config, cycle)) return 1;
+  if (configDrift(io, root, config, cycle)) return 1;
   if (cycle.issue) deps = { ...deps, env: discoverSecrets(config, deps.env, root) };
   const gateConfig: Config = flags.full ? { ...config, tokens: { ...config.tokens, mode: 'full' } } : config;
   const result = runGate(cycle.phase, { root, config: gateConfig, cycle });
@@ -606,13 +608,17 @@ function cmdApprove(io: Writer, root: string, args: string[]): number {
     return 0;
   }
   cycle.approvals[what] = { at: new Date().toISOString() };
-  if (what === 'config') cycle.configHash = configHash(config);
+  if (what === 'config') {
+    cycle.configHash = configHash(config);
+    cycle.configText = readConfigText(root) ?? undefined;
+  }
   saveState(root, state);
   if (what === 'deploy') {
     out(io, 'you signed off on:');
     for (const l of briefEvidence(root, config, cycle)) out(io, l);
   }
   out(io, `approved ${what} for cycle ${cycle.id}`);
+  out(io, 'the assistant can now advance with: unslopped next');
   return 0;
 }
 

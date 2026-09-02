@@ -1,7 +1,7 @@
 import { PHASES, phaseIndex } from './phases.ts';
 import { describeGate } from './gates.ts';
 import { planPath } from './state.ts';
-import { configHash, CONFIG_FILE } from './config.ts';
+import { configDriftLines, CONFIG_FILE } from './config.ts';
 import { debtCounts } from './debt.ts';
 import type { Config, State } from './types.ts';
 
@@ -16,7 +16,7 @@ export function statusLines(root: string, config: Config, state: State, cmd = 'u
     `plan  ${planPath(root, c.id)}`,
   ];
   if (c.issue) lines.push(`issue ${c.issue.key}${c.issue.url ? ' ' + c.issue.url : ''}`);
-  if (configHash(config) !== c.configHash) lines.push(`WARN  ${CONFIG_FILE} changed during this cycle, gates are blocked until: ${cmd} approve config`);
+  if (configDriftLines(root, config, c)) lines.push(`WARN  ${CONFIG_FILE} changed during this cycle, gates are blocked until: ${cmd} approve config`);
   const last = c.history.at(-1);
   if (last) lines.push(`last  ${last.phase} ${last.pass ? 'pass' : 'FAIL'} at ${last.at}`);
   const g = c.tokens?.gate;

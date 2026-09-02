@@ -153,6 +153,7 @@ export interface Cycle {
   startedAt: string;
   startCommit: string | null;
   configHash: string;
+  configText?: string;
   issue: Issue | null;
   approvals: Record<string, { at: string; hash?: string }>;
   history: HistoryEntry[];
