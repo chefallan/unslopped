@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+### Added
+- `unslopped --version`, `unslopped -v` and `unslopped version` print the installed version, read from the package so it always matches what is running.
+
 ## 0.1.2
 
 ### Fixed

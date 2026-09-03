@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { PHASES, nextPhase, phaseIndex } from './phases.ts';
 import { statusLines } from './status.ts';
 import { install, uninstall, onPath } from './install.ts';
@@ -33,6 +34,8 @@ import { computeImpact, formatImpact, localChanges } from './impact.ts';
 import type { Config, Cycle, Deps, Env, Flags, GateResult, Issue, Provider, ReviewRecord, SkillMatch, State, Writer } from './types.ts';
 
 const HELP = `unslopped <command>
+
+  --version, -v                            print the installed version
 
   the loop: you prompt, the assistant starts a cycle, and the phases run:
   plan, code, build, test, release, deploy, operate, monitor. every phase
@@ -1076,8 +1079,20 @@ function cmdRecall(io: Writer, root: string, args: string[], flags: Flags, deps:
   return 0;
 }
 
+function version(): string {
+  try {
+    return JSON.parse(fs.readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')).version;
+  } catch {
+    return 'unknown';
+  }
+}
+
 export async function main(argv: string[], root: string, io: Writer = process.stdout, deps: Partial<Deps> = {}): Promise<number> {
   const { command, args, flags } = parse(argv);
+  if (command === 'version' || command === '-v' || flags.version || flags.v) {
+    out(io, version());
+    return 0;
+  }
   const env = deps.env ?? process.env;
   const d: Deps = {
     env,
