@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+### Fixed
+- Claude Code's auto mode classifier blocked the mechanical cycle commands (`commit`, `next`, `red`, `propose`, `start`), so the assistant kept stopping to ask the human to run them by hand. `unslopped install` now writes permission allowlist rules for those commands, in the bare and npx forms, so the loop runs without interruption. It does not allowlist `approve`, `reset` or `rollback`; those must keep raising the prompt, which is the human decision. `unslopped uninstall` removes exactly the rules install added.
+
 ## 0.1.1
 
 ### Fixed

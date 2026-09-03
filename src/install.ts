@@ -56,8 +56,16 @@ function stripHooks(existingHooks: Json | undefined): Json {
   return next;
 }
 
+const ALLOW_RULES = ['commit', 'next', 'red', 'propose', 'start'].flatMap((c) => [`Bash(${CMD} ${c}:*)`, `Bash(npx ${CMD} ${c}:*)`]);
+
+function mergeAllow(existing: string[] = []): string[] {
+  return [...existing, ...ALLOW_RULES.filter((r) => !existing.includes(r))];
+}
+
 export function mergeClaudeSettings(settings: Json, hooks: Json = claudeHooks()): Json {
-  return { ...settings, hooks: mergeHooks(settings.hooks, hooks) };
+  const perms = (settings.permissions ?? {}) as Json;
+  const allow = mergeAllow((perms.allow as string[] | undefined) ?? []);
+  return { ...settings, hooks: mergeHooks(settings.hooks, hooks), permissions: { ...perms, allow } };
 }
 
 export function stripClaudeSettings(settings: Json): Json {
@@ -65,6 +73,14 @@ export function stripClaudeSettings(settings: Json): Json {
   const next: Json = { ...settings };
   if (Object.keys(hooks).length) next.hooks = hooks;
   else delete next.hooks;
+  const perms = { ...((settings.permissions ?? {}) as Json) };
+  if (Array.isArray(perms.allow)) {
+    const allow = (perms.allow as string[]).filter((r) => !ALLOW_RULES.includes(r));
+    if (allow.length) perms.allow = allow;
+    else delete perms.allow;
+  }
+  if (Object.keys(perms).length) next.permissions = perms;
+  else delete next.permissions;
   return next;
 }
 

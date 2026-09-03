@@ -17,7 +17,7 @@ npm i -g unslopped
 unslopped install
 ```
 
-`install` registers hooks for Claude Code (context on every prompt, dangerous tool calls denied before they run) and Cursor (shell commands denied), and writes global rules for Codex, Gemini, Windsurf, Copilot, OpenCode, Cline, Roo, Kilo, Continue and Goose. Existing settings are preserved; `unslopped uninstall` removes exactly what was added.
+`install` registers hooks for Claude Code (context on every prompt, dangerous tool calls denied before they run) and Cursor (shell commands denied), and writes global rules for Codex, Gemini, Windsurf, Copilot, OpenCode, Cline, Roo, Kilo, Continue and Goose. On Claude Code it also allowlists the mechanical cycle commands (`commit`, `next`, `red`, `propose`, `start`) so auto mode does not stop to ask the human to run them. It does not allowlist `approve`, `reset` or `rollback`: those stay off the allowlist on purpose, so they keep raising the human prompt. Existing settings are preserved; `unslopped uninstall` removes exactly what was added.
 
 Once per project (or let the assistant do it, the protocol tells it to):
 

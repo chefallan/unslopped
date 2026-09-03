@@ -81,3 +81,28 @@ test('uninstall removes markdown blocks, keeps other content, deletes empty file
 test('unknown targets are rejected', () => {
   assert.throws(() => install(tmpDir(), { only: ['emacs'] }), /unknown target: emacs/);
 });
+
+test('install allowlists the safe cycle commands, not the human decisions', () => {
+  const merged = mergeClaudeSettings({});
+  const allow = merged.permissions.allow as string[];
+  for (const c of ['commit', 'next', 'red', 'propose', 'start']) {
+    assert.ok(allow.includes(`Bash(unslopped ${c}:*)`), `bare ${c}`);
+    assert.ok(allow.includes(`Bash(npx unslopped ${c}:*)`), `npx ${c}`);
+  }
+  assert.ok(!allow.some((r) => /approve|reset|rollback/.test(r)), 'human decisions stay off the allowlist');
+});
+
+test('install does not duplicate an allow rule on reinstall', () => {
+  const first = mergeClaudeSettings({ permissions: { allow: ['Bash(git add *)'] } });
+  assert.ok((first.permissions.allow as string[]).includes('Bash(git add *)'));
+  const second = mergeClaudeSettings(first);
+  const dupes = (second.permissions.allow as string[]).filter((r) => r === 'Bash(unslopped commit:*)');
+  assert.equal(dupes.length, 1);
+});
+
+test('strip removes exactly the install allow rules, keeps other entries', () => {
+  const merged = mergeClaudeSettings({ permissions: { allow: ['Bash(git add *)'] } });
+  const stripped = stripClaudeSettings(merged);
+  assert.deepEqual((stripped.permissions as { allow: string[] }).allow, ['Bash(git add *)']);
+  assert.ok(!stripped.hooks);
+});
