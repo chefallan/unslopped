@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.1
+
+### Fixed
+- The deploy and release phase rows told the assistant to make the human type the approve command, which contradicted the one-click rule and defeated the prompt. The rows now tell a hooked assistant to run the approve command itself, so the harness raises the allow-or-deny prompt, and to ask the human only when the platform has no prompts.
+
+## 0.1.0
 
 ### Publish pass
 - The README documents the propose flow, the proposals command, the approvals option and the dialog-title chat-body reading order; the configuration sample matches the shipped defaults.
