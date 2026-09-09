@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+### Added
+- A comprehension gate for the human who accepts a change. The assistant writes multiple choice questions from the diff, `unslopped quiz --file=<quiz.md>` records them and prints them without the answer key, and `unslopped quiz --answer=<letters>` grades them. The deploy gate stays shut until the answers are right, and reopens for a new quiz once a later commit changes the code. Off by default: set `practices.quiz.enabled` to true, with `minLines` to skip small diffs, `pass` for the mark and `maxAttempts` for the retry cap.
+
 ## 0.1.3
 
 ### Added

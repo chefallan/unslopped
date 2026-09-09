@@ -16,7 +16,8 @@ import { isRepo, headSha, currentBranch, addWorktree, commitsSinceDate, porcelai
 import { scanExploitable } from './vulns.ts';
 import { runCommand } from './run.ts';
 import { digest, account } from './tokens.ts';
-import { changedTestFiles, configSecretProblem, countFindings, planSection, redactSecrets } from './practices.ts';
+import { changedTestFiles, configSecretProblem, countFindings, planSection, quizDefaults, redactSecrets } from './practices.ts';
+import { gradeQuiz, parseAnswers, parseQuiz, renderQuiz } from './quiz.ts';
 import { addDebt, debtCounts, listDebt, removeDebtEntries, DEBT_CATEGORIES } from './debt.ts';
 import { formatCandidates, nextCycleCandidates, seedPlanWithDebt, selectDebt, sweepGoal, DEBT_SELECTORS } from './loop.ts';
 import type { DebtSelector } from './loop.ts';
@@ -62,6 +63,8 @@ const HELP = `unslopped <command>
   red                                      run the tests expecting a failure and record it (TDD evidence for the test gate)
   review [--file=review.md]                record a code review from practices.reviewCommand, a file, or stdin
   review --pr=<n> [--approve] [--no-post]  review a GitHub pull request and post the findings as a PR review
+  quiz --file=<quiz.md>                    record comprehension questions written from the diff, then print them
+  quiz --answer=<letters>                  grade the recorded quiz; the deploy gate stays shut until it passes
   pr [--draft]                             push the branch and open a GitHub pull request from the plan
   pr status [--number=<n>]                 show the PR state; on merge tell the tracker and move the issue to done
   tokens [--json]                          token accounting: gate output shown vs raw, hook context, per cycle and total
@@ -363,6 +366,59 @@ function cmdRed(io: Writer, root: string): number {
   for (const l of d.text.split('\n')) out(io, `  ${l}`);
   out(io, 'now implement until green, then: unslopped next');
   return 0;
+}
+
+function cmdQuiz(io: Writer, root: string, flags: Flags): number {
+  const config = requireConfig(io, root);
+  if (!config) return 2;
+  const state = loadState(root);
+  const cycle = requireCycle(io, state);
+  if (!cycle) return 2;
+  const rules = config.practices.quiz ?? quizDefaults();
+  const fromFile = str(flags.file);
+  if (fromFile) {
+    const { questions, problems } = parseQuiz(fs.readFileSync(fromFile, 'utf8'));
+    if (problems.length) {
+      for (const p of problems) out(io, `  ${p}`);
+      return fail(io, `${problems.length} problem(s) in ${fromFile}. fix them and run unslopped quiz --file again`);
+    }
+    cycle.quiz = { at: new Date().toISOString(), total: questions.length, correct: 0, missed: questions.map((q) => q.n), attempts: 0, passed: false, questions };
+    saveState(root, state);
+    fs.rmSync(fromFile, { force: true });
+    out(io, `quiz recorded: ${questions.length} question(s). removed ${fromFile} so the answer key stays out of the diff`);
+    out(io, renderQuiz(questions));
+    out(io, `answer them with: unslopped quiz --answer=<letters>  (${rules.pass}% to pass, ${rules.maxAttempts > 0 ? `${rules.maxAttempts} attempt(s)` : 'no attempt limit'})`);
+    return 0;
+  }
+  const rec = cycle.quiz;
+  if (!rec) return fail(io, 'no quiz recorded. write the questions from the diff, then run: unslopped quiz --file=<quiz.md>');
+  const given = str(flags.answer);
+  if (given === null) {
+    out(io, renderQuiz(rec.questions));
+    out(io, `answer them with: unslopped quiz --answer=<letters>`);
+    return 0;
+  }
+  if (rec.passed) {
+    out(io, `already passed at ${rec.at} with ${rec.correct}/${rec.total}`);
+    return 0;
+  }
+  if (rules.maxAttempts > 0 && rec.attempts >= rules.maxAttempts) {
+    return fail(io, `${rec.attempts} of ${rules.maxAttempts} attempt(s) used, no attempts left. write a new quiz from the current diff and run: unslopped quiz --file=<quiz.md>`);
+  }
+  const score = gradeQuiz(rec.questions, parseAnswers(given));
+  const percent = score.total ? Math.round((score.correct / score.total) * 100) : 0;
+  const passed = percent >= rules.pass;
+  cycle.quiz = { ...rec, at: new Date().toISOString(), ...score, attempts: rec.attempts + 1, passed };
+  saveState(root, state);
+  out(io, `${score.correct}/${score.total} right (${percent}%), ${passed ? 'passed' : 'failed'}`);
+  if (passed) {
+    out(io, 'the deploy gate accepts this quiz until the next commit changes the code');
+    return 0;
+  }
+  out(io, `missed question ${score.missed.join(', ')}`);
+  const left = rules.maxAttempts > 0 ? rules.maxAttempts - cycle.quiz.attempts : -1;
+  out(io, left === 0 ? 'no attempts left. a new quiz has to be written from the current diff' : `read those parts of the diff again${left > 0 ? `, ${left} attempt(s) left` : ''}`);
+  return 1;
 }
 
 async function cmdPr(io: Writer, root: string, args: string[], flags: Flags, deps: Deps): Promise<number> {
@@ -1132,6 +1188,8 @@ export async function main(argv: string[], root: string, io: Writer = process.st
         return cmdRed(io, root);
       case 'review':
         return await cmdReview(io, root, flags, d);
+      case 'quiz':
+        return cmdQuiz(io, root, flags);
       case 'pr':
         return await cmdPr(io, root, args, flags, d);
       case 'rollback':

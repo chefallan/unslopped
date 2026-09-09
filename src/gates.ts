@@ -5,7 +5,7 @@ import { isRepo, porcelain, commitsSince, lastCommitMs } from './git.ts';
 import { planPath, stateDir, STATE_DIR } from './state.ts';
 import { briefLines } from './brief.ts';
 import { digest, account } from './tokens.ts';
-import { authorshipCheck, changelogCheck, commitFormatCheck, coverageCheck, criteriaCheckedCheck, criteriaItems, criteriaVagueCheck, declarationsCheck, diffSizeCheck, exclusiveCheck, handoffCheck, monitorNotesCheck, negativeCriterionCheck, openQuestionsCheck, planSectionsCheck, redCheck, redactSecrets, reviewApprovalCheck, reviewArtifactCheck, rollbackCheck, scopeCheck, secretScanCheck, styleCheck, testDeletionCheck, testEvidenceCheck } from './practices.ts';
+import { authorshipCheck, changelogCheck, commitFormatCheck, coverageCheck, criteriaCheckedCheck, criteriaItems, criteriaVagueCheck, declarationsCheck, diffSizeCheck, exclusiveCheck, handoffCheck, monitorNotesCheck, negativeCriterionCheck, openQuestionsCheck, planSectionsCheck, quizCheck, redCheck, redactSecrets, reviewApprovalCheck, reviewArtifactCheck, rollbackCheck, scopeCheck, secretScanCheck, styleCheck, testDeletionCheck, testEvidenceCheck } from './practices.ts';
 import type { Check, Config, GateContext, GateResult, Phase } from './types.ts';
 
 function check(name: string, ok: boolean, detail = ''): Check {
@@ -138,6 +138,11 @@ function releaseGate(ctx: GateContext): Check[] {
 
 function deployGate(ctx: GateContext): Check[] {
   const checks: Array<Check | null> = [];
+  const quiz = quizCheck(ctx, lastCommitMs(ctx.root));
+  if (quiz) {
+    checks.push(quiz);
+    if (!quiz.ok) return present(checks);
+  }
   if (ctx.config.deploy.requireApproval) {
     const approved = ctx.cycle.approvals?.deploy;
     checks.push(check('approval', Boolean(approved), approved ? `approved at ${approved.at}` : `a human must run: unslopped approve deploy\n${briefLines(ctx.root, ctx.config, ctx.cycle).join('\n')}`));
@@ -188,7 +193,7 @@ export function describeGate(phase: Phase, config: Config): string {
     case 'release':
       return `clean tree, new commits${p.criteriaChecked ? ', criteria ticked' : ''}${p.commitPattern ? ', commit format' : ''}${p.humanAuthorship ? ', authors are humans' : ''}${p.changelog ? ', changelog updated if present' : ''}${p.secretScan ? ', no secrets' : ''}${p.reviewArtifact ? ', review with no critical findings' : ''}${p.reviewApproval ? ', review approval' : ''}, release: ${cmd('release')}`;
     case 'deploy':
-      return `${config.deploy.requireApproval ? 'human approval, ' : ''}${p.rollback && c.deploy ? 'rollback configured, ' : ''}deploy: ${cmd('deploy')}`;
+      return `${p.quiz?.enabled ? `quiz passed on a diff of ${p.quiz.minLines}+ lines, ` : ''}${config.deploy.requireApproval ? 'human approval, ' : ''}${p.rollback && c.deploy ? 'rollback configured, ' : ''}deploy: ${cmd('deploy')}`;
     case 'operate':
       return `healthcheck: ${cmd('healthcheck')}`;
     case 'monitor':

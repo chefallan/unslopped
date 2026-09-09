@@ -52,14 +52,20 @@ export function practiceDefaults(): Practices {
     rollback: true,
     reviewApproval: false,
     messageApproval: true,
+    quiz: quizDefaults(),
     monitorNotes: true,
   };
+}
+
+export function quizDefaults(): NonNullable<Practices['quiz']> {
+  return { enabled: false, minLines: 100, pass: 100, maxAttempts: 3 };
 }
 
 export function mergePractices(raw: Partial<Practices> | undefined): Practices {
   const d = practiceDefaults();
   const style = raw && 'style' in raw ? (raw.style ? { ...styleDefaults(), ...raw.style } : null) : d.style;
-  return { ...d, ...(raw ?? {}), pullRequest: { ...d.pullRequest, ...(raw?.pullRequest ?? {}) }, style };
+  const quiz = raw && 'quiz' in raw ? (raw.quiz ? { ...quizDefaults(), ...raw.quiz } : null) : d.quiz;
+  return { ...d, ...(raw ?? {}), pullRequest: { ...d.pullRequest, ...(raw?.pullRequest ?? {}) }, style, quiz };
 }
 
 const SOURCE_EXTS = new Set(['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'mts', 'cts', 'py', 'go', 'rs', 'java', 'kt', 'rb', 'php', 'cs', 'c', 'cc', 'cpp', 'h', 'hpp', 'swift', 'scala', 'vue', 'svelte', 'dart', 'ex', 'exs', 'sql']);
@@ -401,6 +407,26 @@ export function reviewApprovalCheck(ctx: GateContext): Check | null {
   if (approved) return check('review approval', true, `approved at ${approved.at}`);
   const why = guarded.length ? `guarded paths were touched (${guarded.slice(0, 3).join(', ')}), so a human reader is required no matter how small the diff. ` : '';
   return check('review approval', false, `${why}a human reviewer must run: unslopped approve review`);
+}
+
+export function quizCheck(ctx: GateContext, lastCommitMs: number | null): Check | null {
+  const q = ctx.config.practices.quiz;
+  if (!q || !q.enabled) return null;
+  const changed = diffLines(ctx.root, ctx.cycle.startCommit);
+  if (changed < q.minLines) return check('quiz', true, `${changed} changed line(s), under the ${q.minLines}-line threshold, quiz skipped`);
+  const rec = ctx.cycle.quiz;
+  if (!rec) return check('quiz', false, `${changed} changed line(s). the human who accepts this has to answer for it first: write one question per risky decision in the diff, then run \`unslopped quiz --file=<quiz.md>\``);
+  if (!rec.passed) {
+    if (q.maxAttempts > 0 && rec.attempts >= q.maxAttempts) {
+      return check('quiz', false, `${rec.attempts} of ${q.maxAttempts} attempt(s) used, no attempts left. write a new quiz from the current diff and run \`unslopped quiz --file=<quiz.md>\``);
+    }
+    const left = q.maxAttempts > 0 ? `${q.maxAttempts - rec.attempts} attempt(s) left` : 'no attempt limit';
+    return check('quiz', false, `${rec.correct} of ${rec.total} right, missed question ${rec.missed.join(', ')}. ${left}. read the diff again, then run \`unslopped quiz --answer=<letters>\``);
+  }
+  if (lastCommitMs !== null && Date.parse(rec.at) < lastCommitMs) {
+    return check('quiz', false, `the quiz passed at ${rec.at}, the code changed after that. write a new quiz from the current diff so the answers cover what ships`);
+  }
+  return check('quiz', true, `${rec.correct}/${rec.total} right at ${rec.at}`);
 }
 
 export function rollbackCheck(ctx: GateContext): Check | null {
