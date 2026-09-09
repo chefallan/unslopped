@@ -1,3 +1,5 @@
+import { RUNGS } from './practices.ts';
+
 export const START = '<!-- unslopped:start -->';
 export const END = '<!-- unslopped:end -->';
 export const DEFAULT_CMD = 'npx unslopped';
@@ -17,6 +19,21 @@ This project runs the DevOps lifecycle through Unslopped: plan, code, build, tes
 If the request is more than a one-file change, do not plan yet. Ask the user two or three short design questions: constraints, the alternatives you see, what must not change. Then write the option you chose and the ones you rejected, with one reason each, under \`## Approach\` in the plan. A one-file change needs one sentence there. For work on guarded paths, also write the main scenario as given, when, then, including the rejection path, so the negative criterion falls out of it.
 
 Questions you cannot answer go under \`## Open questions\` in the plan, not into invented answers. The release gate refuses to pass while any remain: get each answered by the human, record the answer, remove the question. A choice others must follow later (a boundary, a data ownership rule, a pattern) gets a durable record: \`${cmd} decide "<title>"\`, fill it, commit it. Check \`${cmd} graph why\` and docs/decisions/ before re-deciding something.
+
+## Leanness ladder
+Before you write anything, read the code the change touches and trace the real flow. Then walk this
+ladder from the top and stop at the first rung that solves the problem:
+
+${RUNGS.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+The ladder runs after you understand the problem, not instead of understanding it. Lazy about the
+solution, never lazy about reading. Write the rung you stopped at in the plan's \`## Approach\`, as
+"Rung 2" plus the one sentence that says why. The plan gate refuses an approach that names no rung.
+
+Four things are never cut to climb higher: trust-boundary validation, data loss handling, security, and
+accessibility. If a rung would drop one of those, you are on the wrong rung.
+
+Adapted from ponytail, github.com/DietrichGebert/ponytail.
 
 ## Project tracker
 Unslopped detects the tracker itself from env vars, project files, the git remote and MCP configs. You do not configure it. It comments on the linked issue and moves it at every phase change, so do not post tracker updates yourself. If a gate prints \`WARN tracker: missing <VAR>\`, tell the human which variable to set and keep working. Never paste credentials into any file.

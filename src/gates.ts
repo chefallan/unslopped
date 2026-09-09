@@ -5,7 +5,7 @@ import { isRepo, porcelain, commitsSince, lastCommitMs } from './git.ts';
 import { planPath, stateDir, STATE_DIR } from './state.ts';
 import { briefLines } from './brief.ts';
 import { digest, account } from './tokens.ts';
-import { authorshipCheck, changelogCheck, commitFormatCheck, coverageCheck, criteriaCheckedCheck, criteriaItems, criteriaVagueCheck, declarationsCheck, diffSizeCheck, exclusiveCheck, handoffCheck, monitorNotesCheck, negativeCriterionCheck, openQuestionsCheck, planSectionsCheck, quizCheck, redCheck, redactSecrets, reviewApprovalCheck, reviewArtifactCheck, rollbackCheck, scopeCheck, secretScanCheck, styleCheck, testDeletionCheck, testEvidenceCheck } from './practices.ts';
+import { authorshipCheck, changelogCheck, commitFormatCheck, coverageCheck, criteriaCheckedCheck, criteriaItems, criteriaVagueCheck, declarationsCheck, diffSizeCheck, exclusiveCheck, handoffCheck, ladderCheck, monitorNotesCheck, negativeCriterionCheck, openQuestionsCheck, planSectionsCheck, quizCheck, redCheck, redactSecrets, reviewApprovalCheck, reviewArtifactCheck, rollbackCheck, scopeCheck, secretScanCheck, styleCheck, testDeletionCheck, testEvidenceCheck } from './practices.ts';
 import type { Check, Config, GateContext, GateResult, Phase } from './types.ts';
 
 function check(name: string, ok: boolean, detail = ''): Check {
@@ -79,6 +79,7 @@ function planGate(ctx: GateContext): Check[] {
   return present([
     check('plan file', true, file),
     planSectionsCheck(ctx, plan),
+    ladderCheck(ctx, plan),
     check('acceptance criteria', items.length > 0, items.length ? `${items.length} item(s)` : 'add at least one item under "## Acceptance criteria"'),
     items.length ? criteriaVagueCheck(ctx, plan) : null,
   ]);
@@ -183,7 +184,7 @@ export function describeGate(phase: Phase, config: Config): string {
   const cmd = (k: keyof typeof c) => c[k] ?? `(no ${k} command)`;
   switch (phase) {
     case 'plan':
-      return `${p.planSections.length ? `${p.planSections.join(', ')} filled in, ` : ''}at least one acceptance criterion${p.criteriaQuality ? ', criteria are observable outcomes' : ''}`;
+      return `${p.planSections.length ? `${p.planSections.join(', ')} filled in, ` : ''}${p.ladder ? 'the approach names a ladder rung, ' : ''}at least one acceptance criterion${p.criteriaQuality ? ', criteria are observable outcomes' : ''}`;
     case 'code':
       return `changes exist${p.scope ? ', every changed file declared in the plan' : ''}${p.testEvidence ? ', tests changed with source' : ''}${p.testDeletion ? ', no tests removed' : ''}${p.maxDiffLines > 0 ? `, diff under ${p.maxDiffLines} lines` : ''}${p.secretScan ? ', no secrets' : ''}${p.style ? ', style clean' : ''}, lint: ${cmd('lint')}`;
     case 'build':
