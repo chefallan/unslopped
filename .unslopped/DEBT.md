@@ -12,3 +12,5 @@ copy; fix it before it spreads), soon (costs someone time while it exists), acce
 - [soon] the quiz gate has no row in the phase table of AGENTS.md and CLAUDE.md, so an assistant learns about it only from the gate failure (src/protocol.ts) :: logged 2026-09-09, cycle 20260909-aa49d7
 - [soon] quizCheck reports 0 of N right before the human has made any attempt; it should say the quiz is waiting for an answer while attempts is 0 (src/practices.ts) :: logged 2026-09-09, cycle 20260909-aa49d7
 - [soon] prTitle picks the most common commit type across the cycle, so bookkeeping commits outvote the one feature commit and the PR opens as chore; there is also no title override flag (src/github.ts) :: logged 2026-09-09, cycle 20260909-aa49d7
+- [soon] the plan template gives no hint that ## Approach needs a rung marker, so every first cycle meets the ladder as a gate failure instead of a prompt (src/state.ts) :: logged 2026-09-09, cycle 20260909-b4c7cd
+- [soon] ponytail-review and ponytail-audit have no equivalent: no scanner flags over-engineered lines in the diff or across the repo (src/vulns.ts) :: logged 2026-09-09, cycle 20260909-b4c7cd
