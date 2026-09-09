@@ -14,6 +14,27 @@ If the request is more than a one-file change, do not plan yet. Ask the user two
 
 Questions you cannot answer go under `## Open questions` in the plan, not into invented answers. The release gate refuses to pass while any remain: get each answered by the human, record the answer, remove the question. A choice others must follow later (a boundary, a data ownership rule, a pattern) gets a durable record: `npx unslopped decide "<title>"`, fill it, commit it. Check `npx unslopped graph why` and docs/decisions/ before re-deciding something.
 
+## Leanness ladder
+Before you write anything, read the code the change touches and trace the real flow. Then walk this
+ladder from the top and stop at the first rung that solves the problem:
+
+1. Does this need to exist? If not, skip it.
+2. Already in this codebase? Reuse it, do not rewrite it.
+3. Does the standard library do it? Use it.
+4. Is it a native platform feature? Use it.
+5. Does an installed dependency do it? Use it.
+6. Can it be one line? Write one line.
+7. Only then, the minimum that works.
+
+The ladder runs after you understand the problem, not instead of understanding it. Lazy about the
+solution, never lazy about reading. Write the rung you stopped at in the plan's `## Approach`, as
+"Rung 2" plus the one sentence that says why. The plan gate refuses an approach that names no rung.
+
+Four things are never cut to climb higher: trust-boundary validation, data loss handling, security, and
+accessibility. If a rung would drop one of those, you are on the wrong rung.
+
+Adapted from ponytail, github.com/DietrichGebert/ponytail.
+
 ## Project tracker
 Unslopped detects the tracker itself from env vars, project files, the git remote and MCP configs. You do not configure it. It comments on the linked issue and moves it at every phase change, so do not post tracker updates yourself. If a gate prints `WARN tracker: missing <VAR>`, tell the human which variable to set and keep working. Never paste credentials into any file.
 

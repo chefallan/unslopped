@@ -53,17 +53,19 @@ test('full cycle through the CLI with gates blocking bad moves', () => {
   r = cli(dir, 'next');
   assert.equal(r.code, 1);
   assert.match(r.out, /ok   acceptance criteria/);
+  assert.match(r.out, /FAIL leanness ladder/);
   fs.writeFileSync(
     plan,
     fs
       .readFileSync(plan, 'utf8')
       .replace('## Goal\n', '## Goal\nExpose GET /health\n')
-      .replace('## Approach\n', '## Approach\nOne module, one test\n')
+      .replace('## Approach\n', '## Approach\nRung 6. One module, one test\n')
       .replace('## Files to touch\n', '## Files to touch\n- health.js\n- health.test.js\n')
   );
   r = cli(dir, 'next');
   assert.equal(r.code, 0);
   assert.match(r.out, /ok   plan sections/);
+  assert.match(r.out, /ok   leanness ladder/);
   assert.match(r.out, /now in phase code/);
 
   r = cli(dir, 'next');

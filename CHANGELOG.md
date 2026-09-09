@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.5
+
+### Added
+- A leanness ladder in the plan phase, adapted from ponytail (github.com/DietrichGebert/ponytail). The generated assistant instructions carry seven rungs, from "does this need to exist" down to "the minimum that works", the rule that the ladder runs after reading the code the change touches, and the four things it never cuts: trust-boundary validation, data loss handling, security and accessibility. The plan gate refuses an approach that names no rung, so the assistant records where it stopped, as "Rung 2" plus one sentence.
+
+### Changed
+- `practices.ladder` defaults to true, which every other plan quality check here already does. An existing project's next plan gate fails until its approach names a rung; the failure prints all seven so the fix is one line. Set `practices.ladder` to false to keep the old behaviour.
+
 ## 0.1.4
 
 ### Added

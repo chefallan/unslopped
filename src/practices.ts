@@ -53,6 +53,7 @@ export function practiceDefaults(): Practices {
     reviewApproval: false,
     messageApproval: true,
     quiz: quizDefaults(),
+    ladder: true,
     monitorNotes: true,
   };
 }
@@ -246,6 +247,18 @@ export interface StyleRules {
   singleOutcomeTests: boolean;
 }
 
+export const RUNGS = [
+  'Does this need to exist? If not, skip it.',
+  'Already in this codebase? Reuse it, do not rewrite it.',
+  'Does the standard library do it? Use it.',
+  'Is it a native platform feature? Use it.',
+  'Does an installed dependency do it? Use it.',
+  'Can it be one line? Write one line.',
+  'Only then, the minimum that works.',
+];
+
+const RUNG_MARKER = /\brung\s*([1-7])\b/i;
+
 export const DEFAULT_FILLER_WORDS = ['basically', 'simply', 'just', 'very', 'really', 'actually', 'obviously', 'of course', 'clearly', 'easily', 'in order to', 'note that', 'it is worth noting', 'needless to say', 'as you can see'];
 
 export function styleDefaults(): StyleRules {
@@ -407,6 +420,14 @@ export function reviewApprovalCheck(ctx: GateContext): Check | null {
   if (approved) return check('review approval', true, `approved at ${approved.at}`);
   const why = guarded.length ? `guarded paths were touched (${guarded.slice(0, 3).join(', ')}), so a human reader is required no matter how small the diff. ` : '';
   return check('review approval', false, `${why}a human reviewer must run: unslopped approve review`);
+}
+
+export function ladderCheck(ctx: GateContext, plan: string): Check | null {
+  if (!ctx.config.practices.ladder) return null;
+  const rung = planSection(plan, 'Approach').match(RUNG_MARKER);
+  if (rung) return check('leanness ladder', true, `the approach climbed to rung ${rung[1]}: ${RUNGS[Number(rung[1]) - 1]}`);
+  const rungs = RUNGS.map((r, i) => `  ${i + 1}. ${r}`).join('\n');
+  return check('leanness ladder', false, `"## Approach" names no rung. read the code the change touches, walk the ladder, then write the rung you stopped at, for example "Rung 2":\n${rungs}`);
 }
 
 export function quizCheck(ctx: GateContext, lastCommitMs: number | null): Check | null {

@@ -62,6 +62,7 @@ export interface Practices {
   reviewApproval: boolean;
   messageApproval: boolean;
   quiz: { enabled: boolean; minLines: number; pass: number; maxAttempts: number } | null;
+  ladder: boolean;
   monitorNotes: boolean;
 }
 
