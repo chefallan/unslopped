@@ -9,3 +9,4 @@ Categories: cleanup (mechanical, safe to batch), pattern (a wrong shape new code
 copy; fix it before it spreads), soon (costs someone time while it exists), accepted
 (evaluated and staying as is).
 - [accepted] completing a cycle and archiving it in one compound command trips the commit rule; hooks see state before execution (src/hooks.ts) :: logged 2026-09-02
+- [soon] the quiz gate has no row in the phase table of AGENTS.md and CLAUDE.md, so an assistant learns about it only from the gate failure (src/protocol.ts) :: logged 2026-09-09, cycle 20260909-aa49d7
