@@ -61,6 +61,7 @@ export interface Practices {
   rollback: boolean;
   reviewApproval: boolean;
   messageApproval: boolean;
+  quiz: { enabled: boolean; minLines: number; pass: number; maxAttempts: number } | null;
   monitorNotes: boolean;
 }
 
@@ -140,6 +141,28 @@ export interface PullRequestRecord {
   mergedAt?: string | null;
 }
 
+export interface QuizOption {
+  letter: string;
+  text: string;
+}
+
+export interface QuizQuestion {
+  n: number;
+  text: string;
+  options: QuizOption[];
+  answer: string;
+}
+
+export interface QuizRecord {
+  at: string;
+  total: number;
+  correct: number;
+  missed: number[];
+  attempts: number;
+  passed: boolean;
+  questions: QuizQuestion[];
+}
+
 export interface Finding {
   severity: 'critical' | 'major' | 'minor';
   text: string;
@@ -162,6 +185,7 @@ export interface Cycle {
   tokens?: Record<string, TokenBucket>;
   red?: RedRun[];
   review?: ReviewRecord;
+  quiz?: QuizRecord;
   worktree?: string;
   pr?: PullRequestRecord;
   debt?: string[];
