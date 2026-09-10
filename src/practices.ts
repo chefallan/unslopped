@@ -48,6 +48,7 @@ export function practiceDefaults(): Practices {
     maxDiffLines: 400,
     secretScan: true,
     exploitScan: true,
+    bloatScan: true,
     audit: null,
     rollback: true,
     reviewApproval: false,

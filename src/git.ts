@@ -100,6 +100,10 @@ function lines(text: string): string[] {
   return text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 }
 
+export function trackedFiles(cwd: string): string[] {
+  return lines(git(['ls-files'], cwd).out).map((f) => f.replace(/\\/g, '/'));
+}
+
 export function untrackedFiles(cwd: string): string[] {
   return lines(git(['ls-files', '--others', '--exclude-standard'], cwd).out);
 }

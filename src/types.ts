@@ -57,6 +57,7 @@ export interface Practices {
   maxDiffLines: number;
   secretScan: boolean;
   exploitScan: boolean;
+  bloatScan: boolean;
   audit: string | null;
   rollback: boolean;
   reviewApproval: boolean;

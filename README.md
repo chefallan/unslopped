@@ -98,6 +98,7 @@ Reviews and pull requests:
 
 ```
 unslopped review [--file=review.md]                    record a review for the cycle
+unslopped review --repo                                flag over-engineered lines across the repository
 unslopped review --pr=<n> [--approve] [--no-post]      review a GitHub PR, post inline findings
 unslopped pr [--draft]                                 push the branch, open the PR from the plan
 unslopped pr status [--number=<n>]                     follow the PR; a merge moves the issue to done
@@ -187,6 +188,8 @@ Linear, Jira Cloud, GitHub Issues, or any HTTP endpoint through the webhook prov
 `unslopped pr` pushes the branch and opens a PR written for the reviewer: a conventional title derived from the cycle's commits, then Why, What changed and Review focus (judgment calls from the plan, guarded paths touched, declaration lines), the issue linkage, the impact analysis and the cycle summary. `unslopped review --pr=<n>` reviews any PR, including ones opened by people: findings with `file:line` land as inline comments, critical findings request changes and fail CI, secrets in the diff are flagged without being asked, and changed hot exports without tests become major findings. `unslopped init --ci` makes that run on every PR through GitHub Actions. `unslopped pr status` follows the merge and closes the loop with the tracker.
 
 Review also watches for lines that look exploitable: SQL built by hand, HTML sinks, shell commands from variables, unsafe deserialization, weak password hashing, guessable randomness for secrets, disabled certificate checks, and paths or redirects built from request data. Each one lands as an advisory finding that says in one sentence what an attacker could do with it. They never block a merge on their own; `practices.exploitScan` turns them off.
+
+Review also enforces the two rungs of the leanness ladder a scanner can read: the standard library already does it, or it fits in one expression. A deep clone through `JSON.parse(JSON.stringify(x))`, a presence test built from `filter().length`, an `indexOf` compared to `-1`, `Object.assign` onto a fresh literal, a `catch` that only rethrows, a `forEach` that only pushes. Each becomes a minor finding naming what to write instead, so bloat is visible in every review without shutting the release gate. `unslopped review --repo` runs the same pass over the whole repository and records nothing. `practices.bloatScan` turns it off. The other five rungs need to know what the codebase and its dependencies already provide, so they stay the assistant's job with the code map, and the rung it names in the plan is a claim you check against the diff.
 
 ## Numbers
 
