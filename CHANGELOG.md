@@ -17,6 +17,7 @@ Six of the ten source rules needed no new text, because the tool already does th
 - `unslopped review --repo` runs the same pass over every tracked file instead of the diff, and records no review artifact. `practices.bloatScan` turns both off.
 
 The scanner enforces the two rungs a line can carry: the standard library does it, or it fits in one expression. The other five need to know what the codebase and its dependencies already provide, so they stay the assistant's judgment, recorded as the rung in the plan and checked by a human against the diff.
+
 ## 0.1.6
 
 ### Fixed
