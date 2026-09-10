@@ -438,6 +438,9 @@ export function quizCheck(ctx: GateContext, lastCommitMs: number | null): Check 
   const rec = ctx.cycle.quiz;
   if (!rec) return check('quiz', false, `${changed} changed line(s). the human who accepts this has to answer for it first: write one question per risky decision in the diff, then run \`unslopped quiz --file=<quiz.md>\``);
   if (!rec.passed) {
+    if (rec.attempts === 0) {
+      return check('quiz', false, `${rec.total} question(s) recorded, waiting for an answer. read the diff, then run \`unslopped quiz --answer=<letters>\`. see them again with \`unslopped quiz\``);
+    }
     if (q.maxAttempts > 0 && rec.attempts >= q.maxAttempts) {
       return check('quiz', false, `${rec.attempts} of ${q.maxAttempts} attempt(s) used, no attempts left. write a new quiz from the current diff and run \`unslopped quiz --file=<quiz.md>\``);
     }
