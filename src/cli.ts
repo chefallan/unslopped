@@ -805,8 +805,20 @@ function cmdRollback(io: Writer, root: string): number {
 
 function cmdLog(io: Writer, root: string): number {
   const state = loadState(root);
-  const cycle = requireCycle(io, state);
-  if (!cycle) return 2;
+  const cycle = state.cycle;
+  if (!cycle) {
+    const done = archivedCycles(root).sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
+    if (!done.length) {
+      out(io, 'no cycles yet. run: unslopped start "<goal>"');
+      return 0;
+    }
+    out(io, `no active cycle. ${done.length} archived:`);
+    for (const c of done.slice(0, 20)) {
+      const failed = c.history.filter((h) => !h.pass).length;
+      out(io, `${c.startedAt.slice(0, 16).replace('T', ' ')}  ${c.id}  ${c.status ?? 'complete'}  ${c.history.length} gate run(s)${failed ? `, ${failed} failed` : ''}  ${c.goal.slice(0, 60)}`);
+    }
+    return 0;
+  }
   if (cycle.history.length === 0) {
     out(io, 'no gate runs yet');
     return 0;
