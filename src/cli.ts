@@ -14,6 +14,7 @@ import { runGate, describeGate } from './gates.ts';
 import { init } from './init.ts';
 import { isRepo, headSha, currentBranch, addWorktree, commitsSinceDate, porcelain, addedLines } from './git.ts';
 import { scanExploitable } from './vulns.ts';
+import { scanBloat, scanBloatFiles } from './lean.ts';
 import { runCommand } from './run.ts';
 import { digest, account } from './tokens.ts';
 import { changedTestFiles, configSecretProblem, countFindings, planSection, quizDefaults, redactSecrets } from './practices.ts';
@@ -437,6 +438,17 @@ async function cmdPr(io: Writer, root: string, args: string[], flags: Flags, dep
 async function cmdReview(io: Writer, root: string, flags: Flags, deps: Deps): Promise<number> {
   const config = requireConfig(io, root);
   if (!config) return 2;
+  if (flags.repo === true || str(flags.repo) !== null) {
+    const findings = scanBloatFiles(root, config.practices.testPatterns);
+    if (!findings.length) {
+      out(io, 'nothing to flag across the tracked files. looks lean');
+      return 0;
+    }
+    out(io, `${findings.length} line(s) worth deleting or simplifying:`);
+    for (const f of findings) out(io, `  ${f.text}`);
+    out(io, 'this pass records no review; it reads the repository, not this cycle');
+    return 0;
+  }
   const prNumber = str(flags.pr);
   if (prNumber !== null || flags.pr === true) {
     const n = Number(prNumber);
@@ -472,6 +484,13 @@ async function cmdReview(io: Writer, root: string, flags: Flags, deps: Deps): Pr
     text = deps.stdinText ?? readStdinText();
     source = 'stdin';
     if (!text.trim()) return fail(io, 'usage: unslopped review --file=<review.md>, pipe the review on stdin, or set practices.reviewCommand');
+  }
+  if (config.practices.bloatScan) {
+    const bloat = scanBloat(addedLines(root, cycle.startCommit), config.practices.testPatterns);
+    if (bloat.length) {
+      text = `${bloat.map((f) => `- [minor] ${f.text}`).join('\n')}\n${text}`;
+      out(io, `${bloat.length} over-engineered line(s) added as findings`);
+    }
   }
   if (config.practices.exploitScan) {
     const risky = scanExploitable(addedLines(root, cycle.startCommit), config.practices.testPatterns);

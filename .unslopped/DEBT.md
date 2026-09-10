@@ -15,3 +15,5 @@ copy; fix it before it spreads), soon (costs someone time while it exists), acce
 - [soon] the plan template gives no hint that ## Approach needs a rung marker, so every first cycle meets the ladder as a gate failure instead of a prompt (src/state.ts) :: logged 2026-09-09, cycle 20260909-b4c7cd
 - [soon] ponytail-review and ponytail-audit have no equivalent: no scanner flags over-engineered lines in the diff or across the repo (src/vulns.ts) :: logged 2026-09-09, cycle 20260909-b4c7cd
 - [cleanup] log prints only the newest twenty archived cycles with no flag to reach the rest (src/cli.ts) :: logged 2026-09-10, cycle 20260910-0298d5
+- [soon] the bloat scanner's repo pass reads only js and ts while the diff pass reads every non-skipped file, so the two disagree about coverage (src/lean.ts) :: logged 2026-09-10, cycle 20260910-c3ca7f
+- [cleanup] the bloat scanner spends its cap in file order, so later files are never read and fixing an early file surfaces findings that look new (src/lean.ts) :: logged 2026-09-10, cycle 20260910-c3ca7f

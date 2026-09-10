@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.7
+
+### Added
+- The other half of ponytail: a leanness scanner. `unslopped review` now adds its own minor findings for lines the ladder would have skipped, where the standard library or one expression already does the job. A deep clone through `JSON.parse(JSON.stringify(x))`, a presence test built from `filter().length`, taking `filter()[0]` instead of `find()`, an `indexOf` compared to `-1`, `Object.assign` onto a fresh literal, a `catch` that only rethrows, values rebuilt from `Object.keys().map()`, a `new Promise` around `setTimeout`. Each finding names what to write instead. They are minor on purpose, so bloat shows in every review without shutting the release gate.
+- `unslopped review --repo` runs the same pass over every tracked file instead of the diff, and records no review artifact. `practices.bloatScan` turns both off.
+
+The scanner enforces the two rungs a line can carry: the standard library does it, or it fits in one expression. The other five need to know what the codebase and its dependencies already provide, so they stay the assistant's judgment, recorded as the rung in the plan and checked by a human against the diff.
 ## 0.1.6
 
 ### Fixed

@@ -1,6 +1,6 @@
 {
   "name": "unslopped",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "unslopped keeps AI coding assistants from shipping slop: one prompt in, verified software out. Eight gated phases, code review that flags exploitable lines, tracker and PR integration, a code map, memory and delivery metrics.",
   "type": "module",
   "bin": {
