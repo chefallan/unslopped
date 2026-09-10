@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.8
+
+### Added
+- A report contract in the generated instructions, adapted from i-have-adhd (github.com/ayghri/i-have-adhd). The reporting rule was one line; it is now a section: lead with the next action, number multi-part work, state numbers rather than amounts, say what failed in the same voice as what worked, rank and group a long list at five per group, name what is still open, end on one concrete next step, no preamble and no recap.
+
+### Changed
+- `unslopped debt` prints at most five rows per category, then a line counting the rest and pointing at the log file. It used to print every row in every category.
+
+Six of the ten source rules needed no new text, because the tool already does them: the prompt hook restates the cycle and phase every turn, `next`, `check` and `resume` already end on a next action, and the gates already report exit codes and milliseconds rather than amounts.
+
 ## 0.1.7
 
 ### Added
@@ -7,6 +17,7 @@
 - `unslopped review --repo` runs the same pass over every tracked file instead of the diff, and records no review artifact. `practices.bloatScan` turns both off.
 
 The scanner enforces the two rungs a line can carry: the standard library does it, or it fits in one expression. The other five need to know what the codebase and its dependencies already provide, so they stay the assistant's judgment, recorded as the rung in the plan and checked by a human against the diff.
+
 ## 0.1.6
 
 ### Fixed

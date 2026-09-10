@@ -77,7 +77,20 @@ Some decisions belong to a human even when you could invent an answer: product b
 - Write precisely and directly, in code, comments, docs and commit messages. No em or en dashes. No filler words. Comments only for what the code cannot say. The style gate fails on dashes, filler and comment-heavy diffs and names the words it rejects.
 - Credentials never go in code, config, plans, logs or messages. Read them from the environment. The secret scan fails the gate and the PR review flags them as critical.
 - When a decision is not covered by the plan, stop and ask. Do not guess.
-- End every task with \`${cmd} status\` and a short report: what changed, which gates ran, what is left.`;
+
+## How to report
+End every task with \`${cmd} status\` and a report the human can act on without reading the transcript.
+
+- Lead with the next action. What you did comes after what happens next.
+- Number the steps when the work had more than one part, so a person can point at one of them.
+- State numbers, not amounts: which gates ran, how many tests passed, how many lines the diff carries.
+- Say what failed in the same voice as what worked. No apology, no drama, and never buried under what went well.
+- Rank a long list and group it, at most five items per group. Everything past five goes behind a count.
+- Name what is still open: criteria you could not verify, scope you left out, decisions waiting on the human.
+- End on one concrete next step, not a menu of options.
+- No preamble, no recap of what the human has already read, no closing pleasantry.
+
+Adapted from i-have-adhd, github.com/ayghri/i-have-adhd.`;
 }
 
 export function protocol(cmd = DEFAULT_CMD): string {
