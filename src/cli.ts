@@ -15,6 +15,8 @@ import { init } from './init.ts';
 import { isRepo, headSha, currentBranch, addWorktree, commitsSinceDate, porcelain, addedLines } from './git.ts';
 import { scanExploitable } from './vulns.ts';
 import { scanBloat, scanBloatFiles } from './lean.ts';
+
+const DEBT_SHOWN = 5;
 import { runCommand } from './run.ts';
 import { digest, account } from './tokens.ts';
 import { changedTestFiles, configSecretProblem, countFindings, planSection, quizDefaults, redactSecrets } from './practices.ts';
@@ -945,7 +947,8 @@ function cmdDebt(io: Writer, root: string, args: string[], flags: Flags): number
       const rows = entries.filter((e) => e.category === c);
       if (!rows.length) continue;
       out(io, `${c} (${rows.length})`);
-      for (const r of rows) out(io, `  - ${r.text}`);
+      for (const r of rows.slice(0, DEBT_SHOWN)) out(io, `  - ${r.text}`);
+      if (rows.length > DEBT_SHOWN) out(io, `  ${rows.length - DEBT_SHOWN} more, see .unslopped/DEBT.md`);
     }
     return 0;
   }

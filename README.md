@@ -40,7 +40,7 @@ Three actors run every task. You decide, the assistant thinks and types, the eng
 5. **You** approve the words at release. The assistant shows the full message in chat, then raises the prompt: the dialog's command line carries the verified title while the chat behind it holds the body. `unslopped commit` executes exactly the approved text, hash-checked.
 6. **You** approve the pull request text (`unslopped approve pr`), then the ship itself (`unslopped approve deploy`). The PR body arrives written for the reviewer: why, what changed, the judgment calls, the impact.
 7. **Engine** reviews every PR in CI with plain-language findings, flags exploitable-looking lines and leaked credentials on its own, then follows the merge and moves the issue to done.
-8. **Assistant** writes what it learned under Monitor. The cycle archives, a skill is saved, swept debt clears, and candidates for the next cycle are offered, never started unasked.
+8. **Assistant** writes what it learned under Monitor. The cycle archives, a skill is saved, swept debt clears, and candidates for the next cycle are offered, never started unasked. The report you get back is held to a contract adapted from [i-have-adhd](https://github.com/ayghri/i-have-adhd): the next action first, numbers rather than amounts, failures in the same voice as successes, long lists ranked and capped at five, one concrete next step last, no preamble and no recap.
 
 Your five moments, total: the design questions, `approve commit`, `approve pr`, `approve deploy`, and the merge. Lost the thread mid-cycle? `unslopped resume` says where things stand and what to do next.
 
