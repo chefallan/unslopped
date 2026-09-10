@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadConfig } from './config.ts';
-import { loadState, proposalPath, saveState } from './state.ts';
+import { loadState, proposalPath, saveState, STATE_DIR } from './state.ts';
 import { briefEvidence } from './brief.ts';
-import { isRepo, currentBranch } from './git.ts';
+import { isRepo, currentBranch, numstatSince, stagedFiles } from './git.ts';
 import { protocolBody, START } from './protocol.ts';
 import { account } from './tokens.ts';
 import { statusLines } from './status.ts';
@@ -123,6 +123,7 @@ const READ_ONLY = /^\s*(cat|type|less|more|head|tail|grep|unslopped|npx\s+unslop
 
 const HUMAN_ONLY = /(^|[|&;(]\s*)(?:npx\s+)?(?:unslopped|ade|awesome-delivery-engine)\s+(approve|reset|rollback)\b/m;
 const GIT_COMMIT = /(^|[|&;(]\s*)git\b(?:\s+-[cC]\s+\S+|\s+--?[A-Za-z][^\s|;&]*)*\s+commit\b/m;
+const COMMIT_ALL = /\s(?:--all\b|-[A-Za-z]*a[A-Za-z]*\b)/;
 const GIT_PUSH_FORCE = /(^|[|&;(]\s*)git\s+push\b[^|;&\n]*\s(--force|-f)\b/m;
 const CONFIG_FILE_NAME = /(?:unslopped|ade)\.config\.json/;
 const CONFIG_WRITE = new RegExp(`>>?\\s*\\S*${CONFIG_FILE_NAME.source}|\\b(?:sed\\s+-i|tee|rm|mv|cp)\\b[^|;&\\n]*${CONFIG_FILE_NAME.source}`);
@@ -194,8 +195,16 @@ export function toolDecision(root: string, toolName: unknown, input: Record<stri
     if (GIT_COMMIT.test(c) && /co-authored-by/i.test(c) && ASSISTANT_ID.test(c)) {
       return block('commits carry the human as the only author. Drop the assistant co-author trailer and commit again.');
     }
-    if (active && config.practices.messageApproval && GIT_COMMIT.test(c)) {
-      return block('commit messages need the human to approve them first. Propose with `unslopped propose commit "<type(scope): subject>"`, ask the human to run `unslopped approve commit`, then run `unslopped commit`.');
+    if (config.practices.messageApproval && GIT_COMMIT.test(c)) {
+      if (active) {
+        return block('commit messages need the human to approve them first. Propose with `unslopped propose commit "<type(scope): subject>"`, ask the human to run `unslopped approve commit`, then run `unslopped commit`.');
+      }
+      const sweeps = COMMIT_ALL.test(c) ? numstatSince(root, null).map((f) => f.file.replace(/\\/g, '/')) : [];
+      const source = [...new Set([...stagedFiles(root), ...sweeps])].filter((f) => !f.startsWith(`${STATE_DIR}/`));
+      if (source.length) {
+        const shown = source.slice(0, 3).join(', ') + (source.length > 3 ? `, +${source.length - 3} more` : '');
+        return block(`no cycle is active, so this commit carries no approved message, and it stages ${source.length} file(s) outside ${STATE_DIR}/: ${shown}. start a cycle so the message goes through propose and approve, or leave this commit to the human.`);
+      }
     }
     if (GIT_PUSH_FORCE.test(c)) return block('force push is not allowed.');
     if (STATE_PATH.test(c) && !READ_ONLY.test(c)) return block('.unslopped/state.json and .unslopped/cycles are written by unslopped only. Read state with `unslopped status --json`.');

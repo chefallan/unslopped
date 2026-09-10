@@ -104,6 +104,10 @@ export function untrackedFiles(cwd: string): string[] {
   return lines(git(['ls-files', '--others', '--exclude-standard'], cwd).out);
 }
 
+export function stagedFiles(cwd: string): string[] {
+  return lines(git(['diff', '--cached', '--name-only'], cwd).out).map((f) => f.replace(/\\/g, '/'));
+}
+
 export function changedFiles(cwd: string, since: string | null): string[] {
   const tracked = since ? lines(git(['diff', '--name-only', since], cwd).out) : lines(git(['diff', '--name-only', 'HEAD'], cwd).out);
   return [...new Set([...tracked, ...untrackedFiles(cwd)])].filter((f) => !f.startsWith('.unslopped/'));
