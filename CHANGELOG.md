@@ -10,6 +10,9 @@
 
 Six of the ten source rules needed no new text, because the tool already does them: the prompt hook restates the cycle and phase every turn, `next`, `check` and `resume` already end on a next action, and the gates already report exit codes and milliseconds rather than amounts.
 
+### Repo
+- This project now runs the review workflow it documents. The README has always said the engine reviews every pull request in CI, and this repository had no workflow at all, so none of its own pull requests was ever reviewed that way. `unslopped init --ci` generated it, and a test asserts the committed file still matches what the generator produces.
+
 ## 0.1.7
 
 ### Added

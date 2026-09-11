@@ -9,6 +9,7 @@ import { runGate } from '../src/gates.ts';
 import { newCycle } from '../src/state.ts';
 import { loadConfig } from '../src/config.ts';
 import { protocolBody } from '../src/protocol.ts';
+import { ciWorkflow } from '../src/init.ts';
 import { tmpDir, initRepo, git, writeConfig, cli, PRACTICES_OFF } from './helpers.ts';
 
 const line = (file: string, text: string, n = 1) => ({ file, line: n, text });
@@ -145,6 +146,14 @@ test('style gate runs on the diff, can be disabled', () => {
   writeConfig(off, { test: 'x' }, { practices: { ...PRACTICES_OFF, style: { maxCommentRatio: 0.5 } } });
   assert.deepEqual(loadConfig(off)!.practices.style!.forbidden, ['—', '–']);
   assert.equal(loadConfig(off)!.practices.style!.maxCommentRatio, 0.5);
+});
+
+test('Unslopped runs its own review workflow on its own pull requests', () => {
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const workflow = path.join(root, '.github', 'workflows', 'unslopped-review.yml');
+  assert.equal(fs.existsSync(workflow), true);
+  assert.equal(fs.readFileSync(workflow, 'utf8').replace(/\r\n/g, '\n'), ciWorkflow());
+  assert.equal(fs.existsSync(path.join(root, '.github', 'pull_request_template.md')), true);
 });
 
 test('Unslopped itself passes its own style rules', () => {
