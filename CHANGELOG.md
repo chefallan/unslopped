@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.9
+
+### Added
+- `"posting": "draft"`, a mode where the assistant writes every outward-facing text and the human posts it. The tracker comment and the status change go to `.unslopped/proposals/tracker.md` instead of the issue, `unslopped pr` writes the title and body to `.unslopped/proposals/pr.md` and opens nothing, and `unslopped review --pr` prints its findings and sends none. The branch is still pushed, because otherwise there is no pull request for the human to open.
+
+This closes an inconsistency. Commit text, pull request text and the deploy all needed human approval, while tracker comments and status transitions fired on every phase change with no approval at all, and they are the one action in the loop other people see.
+
+`posting` defaults to `"auto"`, which behaves exactly as before. Posting only happens when a tracker credential is configured, and configuring one is the consent, so flipping the default would break working integrations nobody asked to change. An unrecognised value falls back to `"auto"` and never to `"draft"`.
+
 ## 0.1.8
 
 ### Added

@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { proposalPath } from './state.ts';
 import type { Cycle, Env, FetchLike, Issue, Provider, Tracker, TrackerConfig, TrackerEvent, Writer } from './types.ts';
 
 export const PROVIDERS: Provider[] = ['linear', 'jira', 'github', 'webhook'];
@@ -205,7 +208,8 @@ export function eventMessage(cycle: Cycle, event: TrackerEvent): string {
 }
 
 export interface NotifyArgs {
-  config: { tracker?: Partial<TrackerConfig> };
+  root: string;
+  config: { tracker?: Partial<TrackerConfig>; posting?: 'auto' | 'draft' };
   cycle: Cycle;
   event: TrackerEvent;
   io: Writer;
@@ -213,7 +217,15 @@ export interface NotifyArgs {
   fetchImpl?: FetchLike;
 }
 
-export async function notifyTracker({ config, cycle, event, io, env = process.env, fetchImpl = globalThis.fetch as FetchLike }: NotifyArgs): Promise<void> {
+export function draftTracker(root: string, cycle: Cycle, message: string, target: string | null): string {
+  const file = proposalPath(root, 'tracker');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const entry = [`## ${cycle.issue?.key ?? cycle.id} at ${new Date().toISOString()}`, target ? `Move to: ${target}` : 'Move to: no change', '', message, ''].join('\n');
+  fs.appendFileSync(file, (fs.existsSync(file) ? '\n' : '') + entry);
+  return `tracker text drafted, post it yourself: ${path.relative(root, file).replace(/\\/g, '/')}`;
+}
+
+export async function notifyTracker({ root, config, cycle, event, io, env = process.env, fetchImpl = globalThis.fetch as FetchLike }: NotifyArgs): Promise<void> {
   if (!cycle.issue) return;
   const t = mergeTracker(config.tracker);
   let tracker: Tracker | null;
@@ -225,6 +237,10 @@ export async function notifyTracker({ config, cycle, event, io, env = process.en
   }
   if (!tracker) return;
   const target = event.type === 'complete' ? t.transitions.done : event.type === 'advanced' || event.type === 'started' ? t.transitions[event.to] : null;
+  if (config.posting === 'draft') {
+    io.write(draftTracker(root, cycle, eventMessage(cycle, event), target) + '\n');
+    return;
+  }
   try {
     if (t.comments) await tracker.comment(cycle.issue, eventMessage(cycle, event));
     if (target) await tracker.transition(cycle.issue, target);

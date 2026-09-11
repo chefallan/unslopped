@@ -22,7 +22,7 @@ export function planPath(root: string, id: string): string {
   return path.join(plansDir(root), `${id}.md`);
 }
 
-export function proposalPath(root: string, kind: 'commit' | 'pr'): string {
+export function proposalPath(root: string, kind: 'commit' | 'pr' | 'tracker'): string {
   return path.join(stateDir(root), 'proposals', `${kind}.md`);
 }
 

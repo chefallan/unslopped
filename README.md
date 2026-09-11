@@ -253,9 +253,14 @@ Review also enforces the two rungs of the leanness ladder a scanner can read: th
     "worktree": false,
     "pullRequest": { "auto": false, "base": null, "draft": false }
   },
-  "approvals": "prompt"
+  "approvals": "prompt",
+  "posting": "auto"
 }
 ```
+
+`"posting": "draft"` stops the assistant writing anywhere other people read. The tracker comment and the status change go to `.unslopped/proposals/tracker.md` instead of the issue, `unslopped pr` writes the title and body to `.unslopped/proposals/pr.md` and opens nothing, and `unslopped review --pr` prints its findings and posts none. The branch is still pushed, because otherwise there is no pull request for you to open. You post the text; the tool never does.
+
+It defaults to `"auto"`, which posts, because posting only happens when a tracker credential is configured and configuring one is the consent. Set `"draft"` when the assistant should draft and you should post.
 
 Environment: `LINEAR_API_KEY`, `JIRA_EMAIL` + `JIRA_API_TOKEN` + `JIRA_BASE_URL`, `GITHUB_TOKEN` or `gh auth`, `UNSLOPPED_WEBHOOK_URL` + `UNSLOPPED_WEBHOOK_TOKEN`, `UNSLOPPED_GITHUB_API` for GitHub Enterprise, `UNSLOPPED_HOME` to relocate the global directory.
 
