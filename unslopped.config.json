@@ -59,7 +59,7 @@
     "securityScan": null,
     "changelog": true,
     "tdd": true,
-    "reviewArtifact": false,
+    "reviewArtifact": true,
     "reviewCommand": null,
     "worktree": false,
     "pullRequest": {

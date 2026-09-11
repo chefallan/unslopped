@@ -148,6 +148,12 @@ test('style gate runs on the diff, can be disabled', () => {
   assert.equal(loadConfig(off)!.practices.style!.maxCommentRatio, 0.5);
 });
 
+test('Unslopped requires a review artifact on its own cycles', () => {
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const config = loadConfig(root)!;
+  assert.equal(config.practices.reviewArtifact, true);
+});
+
 test('Unslopped runs its own review workflow on its own pull requests', () => {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const workflow = path.join(root, '.github', 'workflows', 'unslopped-review.yml');
