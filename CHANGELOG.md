@@ -9,6 +9,9 @@ This closes an inconsistency. Commit text, pull request text and the deploy all 
 
 `posting` defaults to `"auto"`, which behaves exactly as before. Posting only happens when a tracker credential is configured, and configuring one is the consent, so flipping the default would break working integrations nobody asked to change. An unrecognised value falls back to `"auto"` and never to `"draft"`.
 
+### Repo
+- This project now requires a review on its own cycles. `practices.reviewArtifact` had been false since the beginning, so seven cycles shipped with no review gate at all, and every review artifact on disk was written by the assistant about code it had just written. The release gate now refuses without a review that is newer than the last commit and carries no critical findings, and a test fails if the setting is ever put back. This makes a review compulsory, not independent; independence comes from the CI workflow and from a configured `reviewCommand`.
+
 ## 0.1.8
 
 ### Added
