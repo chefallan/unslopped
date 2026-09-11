@@ -592,7 +592,7 @@ async function cmdStart(io: Writer, root: string, args: string[], flags: Flags, 
   if (prefs.length) out(io, `prefs  ${prefs.length} remembered, listed in the plan`);
   out(io, `phase plan (1/${PHASES.length})`);
   out(io, `fill in ${plan}, then run: unslopped next`);
-  await notifyTracker({ config, cycle, event: { type: 'started', to: 'plan' }, io, env: deps.env, fetchImpl: deps.fetchImpl });
+  await notifyTracker({ root, config, cycle, event: { type: 'started', to: 'plan' }, io, env: deps.env, fetchImpl: deps.fetchImpl });
   return 0;
 }
 
@@ -659,7 +659,7 @@ async function gate(io: Writer, root: string, flags: Flags, advance: boolean, de
       const candidates = nextCycleCandidates(root, cycle);
       if (candidates.length) for (const l of formatCandidates(candidates)) out(io, l);
     }
-    await notifyTracker({ config, cycle, event: { type: 'complete' }, io, env: deps.env, fetchImpl: deps.fetchImpl });
+    await notifyTracker({ root, config, cycle, event: { type: 'complete' }, io, env: deps.env, fetchImpl: deps.fetchImpl });
     return 0;
   }
   cycle.phase = following;
@@ -675,7 +675,7 @@ async function gate(io: Writer, root: string, flags: Flags, advance: boolean, de
     const code = await openPullRequest(io, root, config, state, prDeps);
     if (code !== 0 && !flags.json) out(io, 'WARN pull request not opened. run unslopped pr when the repository and token are available');
   }
-  await notifyTracker({ config, cycle, event: { type: 'advanced', from, to: following }, io, env: deps.env, fetchImpl: deps.fetchImpl });
+  await notifyTracker({ root, config, cycle, event: { type: 'advanced', from, to: following }, io, env: deps.env, fetchImpl: deps.fetchImpl });
   return 0;
 }
 
@@ -887,7 +887,7 @@ async function cmdReset(io: Writer, root: string, args: string[], flags: Flags, 
     const learned = learnFromCycle(root, deps.home, cycle, 'abandoned');
     if (learned.action !== 'none') out(io, `skill ${learned.name} marked abandoned (${learned.health})`);
   }
-  if (config && cycle.issue) await notifyTracker({ config, cycle, event: { type: 'abandoned' }, io, env: discoverSecrets(config, deps.env, root), fetchImpl: deps.fetchImpl });
+  if (config && cycle.issue) await notifyTracker({ root, config, cycle, event: { type: 'abandoned' }, io, env: discoverSecrets(config, deps.env, root), fetchImpl: deps.fetchImpl });
   if (args.length || flags.issue || flags['from-debt']) {
     out(io);
     return cmdStart(io, root, args, flags, deps);

@@ -91,6 +91,7 @@ export function defaultConfig(root: string): Config {
     graph: graphDefaults(),
     assistants: [...ASSISTANTS],
     approvals: 'prompt',
+    posting: 'auto',
   };
 }
 
@@ -112,6 +113,7 @@ export function loadConfig(root: string): Config | null {
     graph: mergeGraph(cfg.graph as Partial<Config['graph']> | undefined),
     assistants: (cfg.assistants as string[] | undefined) ?? [...ASSISTANTS],
     approvals: cfg.approvals === 'command' ? 'command' : 'prompt',
+    posting: cfg.posting === 'draft' ? 'draft' : 'auto',
   };
 }
 

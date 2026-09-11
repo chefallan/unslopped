@@ -36,7 +36,7 @@ accessibility. If a rung would drop one of those, you are on the wrong rung.
 Adapted from ponytail, github.com/DietrichGebert/ponytail.
 
 ## Project tracker
-Unslopped detects the tracker itself from env vars, project files, the git remote and MCP configs. You do not configure it. It comments on the linked issue and moves it at every phase change, so do not post tracker updates yourself. If a gate prints `WARN tracker: missing <VAR>`, tell the human which variable to set and keep working. Never paste credentials into any file.
+Unslopped detects the tracker itself from env vars, project files, the git remote and MCP configs. You do not configure it. It comments on the linked issue and moves it at every phase change, so do not post tracker updates yourself. When `posting` is `draft`, nothing reaches the tracker or the code host: the comment, the status change and the pull request text are written to `.unslopped/proposals/` for the human to post, and `npx unslopped pr` pushes the branch and opens nothing. Say the text was drafted, never that it was posted, and tell the human which file holds it. If a gate prints `WARN tracker: missing <VAR>`, tell the human which variable to set and keep working. Never paste credentials into any file.
 
 ## Phases
 | Phase | Your job | Gate, checked by `npx unslopped next` |

@@ -77,6 +77,7 @@ export interface Config {
   graph: { enabled: boolean; maxFiles: number; maxFileKb: number; ignore: string[] };
   assistants: string[];
   approvals: 'prompt' | 'command';
+  posting: 'auto' | 'draft';
 }
 
 export interface Check {

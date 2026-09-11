@@ -109,6 +109,14 @@ export async function openPullRequest(io: Writer, root: string, config: Config, 
 
     const area = mostCommon([...changed.keys()].filter((f) => f.includes('/')).map((f) => f.split('/')[0]));
     const title = prTitle(cycle, { conventional: Boolean(config.practices.commitPattern), subjects: commitSubjects(cycle.startCommit, root).filter((s) => !/^Merge /.test(s)), area });
+    if (config.posting === 'draft') {
+      const file = proposalPath(root, 'pr');
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, `${title}\n\n${body}\n`);
+      out(io, `pull request text drafted, open it yourself: ${path.relative(root, file).replace(/\\/g, '/')}`);
+      out(io, `branch ${branch} is pushed, so the compare view is ready for it`);
+      return 0;
+    }
     if (config.practices.messageApproval && !existing) {
       const file = proposalPath(root, 'pr');
       const proposed = `${title}\n\n${body}`;
@@ -264,6 +272,10 @@ export async function reviewPullRequest(io: Writer, root: string, config: Config
       saveState(root, state);
     }
 
+    if (config.posting === 'draft') {
+      out(io, 'posting is draft, so the findings above were not sent. post them yourself');
+      return counts.critical ? 1 : 0;
+    }
     if (flags['no-post']) return counts.critical ? 1 : 0;
     const allowed = new Map(files.map((f) => [f.filename, rightSideLines(f.patch)]));
     const payload = reviewPayload(findings, allowed, { approve: Boolean(flags.approve), header: `Unslopped review of #${pr.number} at ${pr.head.sha.slice(0, 7)}` });
