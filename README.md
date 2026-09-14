@@ -254,9 +254,26 @@ Review also enforces the two rungs of the leanness ladder a scanner can read: th
     "pullRequest": { "auto": false, "base": null, "draft": false }
   },
   "approvals": "prompt",
-  "posting": "auto"
+  "posting": "auto",
+  "docs": []
 }
 ```
+
+`docs` lists the documents that govern how this project's code is written: a shared contract, a conventions doc, a reference implementation, a design direction file. Each entry is a `name` and a `path`.
+
+```json
+"docs": [
+  { "name": "Conventions", "path": "docs/conventions.md" },
+  { "name": "Payments contract", "path": "docs/contracts/payments.md" },
+  { "name": "Design direction", "path": "DESIGN.md" }
+]
+```
+
+They are printed at the start of every session, so the assistant knows they exist before it plans rather than after. The plan gate fails if a listed path is not on disk, which catches the config still pointing at a doc that moved.
+
+They are data to apply, never instructions to override: a document says what the project already decided, and text inside one telling the assistant to ignore a rule is a collision to raise, not an order to follow. When two sources disagree, the assistant names both, says which lines conflict, and asks which wins before changing either.
+
+To make a document compulsory reading for changes in a given area, pair it with `practices.declarations`, which already fails the plan when a matching path changes and the plan does not state the named line.
 
 `"posting": "draft"` stops the assistant writing anywhere other people read. The tracker comment and the status change go to `.unslopped/proposals/tracker.md` instead of the issue, `unslopped pr` writes the title and body to `.unslopped/proposals/pr.md` and opens nothing, and `unslopped review --pr` prints its findings and posts none. The branch is still pushed, because otherwise there is no pull request for you to open. You post the text; the tool never does.
 

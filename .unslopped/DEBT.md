@@ -20,3 +20,4 @@ copy; fix it before it spreads), soon (costs someone time while it exists), acce
 - [cleanup] unslopped debt has no flag to print past the five-row cap, so a sweep has to open DEBT.md by hand (src/cli.ts) :: logged 2026-09-10, cycle 20260910-9c2581
 - [soon] pr status reports no pull request in draft mode because cycle.pr is never set when the human opens the PR by hand (src/pr.ts) :: logged 2026-09-11, cycle 20260911-fcd1d0
 - [soon] nothing lists which practices are off, so a project can carry a disabled gate for months without it showing in status or resume (src/status.ts) :: logged 2026-09-11, cycle 20260911-8a5730
+- [accepted] the docs check proves a listed file exists and nothing about whether it is current, so a two-year-old stub passes (src/practices.ts) :: logged 2026-09-14, cycle 20260914-04cfd2
