@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { addedLines, changedFiles, commitMeta, commitSubjects, diffLines, numstatSince, parseUnifiedDiff } from './git.ts';
 import { planPath } from './state.ts';
 import { tokenize } from './search.ts';
@@ -421,6 +422,14 @@ export function reviewApprovalCheck(ctx: GateContext): Check | null {
   if (approved) return check('review approval', true, `approved at ${approved.at}`);
   const why = guarded.length ? `guarded paths were touched (${guarded.slice(0, 3).join(', ')}), so a human reader is required no matter how small the diff. ` : '';
   return check('review approval', false, `${why}a human reviewer must run: unslopped approve review`);
+}
+
+export function docsCheck(ctx: GateContext): Check | null {
+  const docs = ctx.config.docs;
+  if (!docs.length) return null;
+  const missing = docs.filter((d) => !fs.existsSync(path.join(ctx.root, d.path)));
+  if (!missing.length) return check('project docs', true, `${docs.length} listed, all present. read them before deciding`);
+  return check('project docs', false, `${missing.length} listed doc(s) are not on disk. fix the path in unslopped.config.json, or drop the entry:\n${missing.map((d) => `- ${d.name}: ${d.path}`).join('\n')}`);
 }
 
 export function ladderCheck(ctx: GateContext, plan: string): Check | null {
