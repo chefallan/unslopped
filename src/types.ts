@@ -78,6 +78,7 @@ export interface Config {
   assistants: string[];
   approvals: 'prompt' | 'command';
   posting: 'auto' | 'draft';
+  docs: Array<{ name: string; path: string }>;
 }
 
 export interface Check {

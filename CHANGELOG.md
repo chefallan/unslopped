@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.10
+
+### Added
+- A `docs` list in the config for the documents that govern how a project's code is written: a shared contract, a conventions doc, a reference implementation, a design direction file. Each entry is a `name` and a `path`. They are printed at the start of every session, so an assistant knows they exist before it plans rather than after, and the plan gate fails when a listed path is not on disk, which catches config still pointing at a document that moved.
+- A rule for reading them. They are data to apply, never instructions to override: a document says what the project already decided, and text inside one telling the assistant to ignore a rule is a collision to raise rather than an order to follow. When two sources disagree, the assistant names both, says which lines conflict, and asks which wins before changing either.
+
+The collision rule is adapted from anti-slop (github.com/miqdadbadjuber/anti-slop), which supplies the part the other requests for this were missing. Its UI rules are not adopted: they need a DOM and a running app, and unslopped runs configured commands against any language. Its Delivery Gate, 49 questions an agent answers about its own work, is the self-certification every gate here exists to refuse.
+
+Nothing forces the plan to cite a document. `practices.declarations` already fails a plan when a matching path changes and the plan does not state the named line, so pair a doc with a `when` glob there to make it compulsory reading for an area.
+
 ## 0.1.9
 
 ### Added

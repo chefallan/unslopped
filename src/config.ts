@@ -92,6 +92,7 @@ export function defaultConfig(root: string): Config {
     assistants: [...ASSISTANTS],
     approvals: 'prompt',
     posting: 'auto',
+    docs: [],
   };
 }
 
@@ -114,6 +115,7 @@ export function loadConfig(root: string): Config | null {
     assistants: (cfg.assistants as string[] | undefined) ?? [...ASSISTANTS],
     approvals: cfg.approvals === 'command' ? 'command' : 'prompt',
     posting: cfg.posting === 'draft' ? 'draft' : 'auto',
+    docs: Array.isArray(cfg.docs) ? cfg.docs.filter((d: { name?: unknown; path?: unknown }) => typeof d?.name === 'string' && typeof d?.path === 'string') : [],
   };
 }
 
